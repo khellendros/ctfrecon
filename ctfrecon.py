@@ -46,8 +46,9 @@ for line in exploitlist[1:]:
                     contentLine = contentLine.lower()
                     search = contentLine.find(squery)
                     if search != -1:
-                            print(f"\033[1;31;40m FILE: \033[1;32;40m {tmp[FILE]} \033[1;31;40m DESCRIPTION: \033[1;32;40m {tmp[DESCRIPTION]}")
-                            break #found in file, break to prevent duplicate listing
+                        print(f"\033[1;31;40mFILE: \033[1;32;40m {tmp[FILE]} \033[1;31;40m")
+                        print(f"DESCRIPTION: \033[1;32;40m {tmp[DESCRIPTION]}\n")
+                        break #found in file, break to prevent duplicate listing
             except:
                 print('Some sort of error occured: ',  sys.exc_info()[0])
 
