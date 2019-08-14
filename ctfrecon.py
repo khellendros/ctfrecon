@@ -1,6 +1,6 @@
 import sys, os, getopt
 
-###CSV Identifiers###
+#-------------CSV Identifiers------------
 ID = 0
 FILE = 1
 DESCRIPTION = 2
@@ -9,9 +9,9 @@ AUTHOR = 4
 TYPE = 5
 PLATFORM = 6
 PORT = 7
-#####################
+#-----------------------------------------
 SSPATH = '/usr/share/exploitdb/' #searchsploit root dir
-######OPTIONS########
+#------------------OPTIONS----------------
 unixOptions = "d:s:h"
 gnuOptions = ["deep=", "surface=", "help"]
 
@@ -45,7 +45,10 @@ def deepsearch(searchStr, csvIndex):   #traverse CSV index and search all files 
                         search = contentLine.find(searchStr)
                         if search != -1:
                             print(f"\033[1;31;40mFILE: \033[1;32;40m {tmp[FILE]} \033[1;31;40m")
-                            print(f"DESCRIPTION: \033[1;32;40m {tmp[DESCRIPTION]}\n")
+                            print(f"DESCRIPTION: \033[1;32;40m {tmp[DESCRIPTION]} \033[1;31;40m")
+                            print(f"DATE: \033[1;32;40m {tmp[DATE]} \033[1;31;40m")
+                            print(f"AUTHOR: \033[1;32;40m {tmp[AUTHOR]} \033[1;31;40m")
+                            print(f"TYPE: \033[1;32;40m {tmp[TYPE]}\n")
                             break       #break to prevent duplicate results
                 except:
                     print('Some sort of error occured: ',  sys.exc_info()[0])  #TODO: Do proper error handling here
@@ -71,9 +74,4 @@ for currentArg, currentValue in args:
     elif len(sys.argv) == 1:
         print("Options Coming Soon!")
         sys.exit()
-
-print('')
-
-
-
 
