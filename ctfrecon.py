@@ -29,9 +29,11 @@ def openCSV(PATH):   #open, read all lines from CSV index
     
 
 def deepsearch(searchStr, csvIndex):   #traverse CSV index and search all files referenced for squery
-    
-    print("\nWe're Going Deep!------------------------>SEARCH QUERY: " + searchStr)
+    x = 0 
+    foundFilePaths = []
 
+    print("\nWe're Going Deep!------------------------>SEARCH QUERY: " + searchStr)
+    
     for line in csvIndex[1:]:                                           #loop through each line in the index 
         line.strip('/n')           
         tmp = line.split(',')                                           #pull each value into a list
@@ -44,11 +46,15 @@ def deepsearch(searchStr, csvIndex):   #traverse CSV index and search all files 
                         contentLine = contentLine.lower()
                         search = contentLine.find(searchStr)
                         if search != -1:
-                            print(f"\033[1;31;40mFILE: \033[1;32;40m {tmp[FILE]} \033[1;31;40m")
-                            print(f"DESCRIPTION: \033[1;32;40m {tmp[DESCRIPTION]} \033[1;31;40m")
-                            print(f"DATE: \033[1;32;40m {tmp[DATE]} \033[1;31;40m")
-                            print(f"AUTHOR: \033[1;32;40m {tmp[AUTHOR]} \033[1;31;40m")
-                            print(f"TYPE: \033[1;32;40m {tmp[TYPE]}\n")
+                            print(f"\033[1;32;40m{x+1})\033[1;31;40mFILE: \033[1;32;40m {tmp[FILE]} \033[1;31;40m")
+                            print(f"  DESCRIPTION: \033[1;32;40m {tmp[DESCRIPTION]} \033[1;31;40m")
+                            print(f"  DATE: \033[1;32;40m {tmp[DATE]} \033[1;31;40m")
+                            print(f"  AUTHOR: \033[1;32;40m {tmp[AUTHOR]} \033[1;31;40m")
+                            print(f"  TYPE: \033[1;32;40m {tmp[TYPE]} \033[1;31;40m")
+                            print(f"  PLATFORM: \033[1;32;40m {tmp[PLATFORM]} \033[1;31;40m")
+                            print(f"  PORT: \033[1;32;40m {tmp[PORT]} \n")
+                            foundFilePaths.append(tmp[FILE])
+                            x = x + 1
                             break       #break to prevent duplicate results
                 except:
                     print('Some sort of error occured: ',  sys.exc_info()[0])  #TODO: Do proper error handling here
@@ -57,6 +63,7 @@ def deepsearch(searchStr, csvIndex):   #traverse CSV index and search all files 
                     exploitFILE.close
         else:
             print('Skipping ' + exploitsfilepath + '  Does not exist!')
+    return foundFilePaths
 
 ############################MAIN##################################
 
@@ -70,8 +77,18 @@ except getopt.error as err:
 
 for currentArg, currentValue in args:
     if currentArg in ("-d", "--deep"):
-        deepsearch(currentValue.lower(), openCSV(SSPATH))
+        results = deepsearch(currentValue.lower(), openCSV(SSPATH))
+        if results is not None:
+            print("(0 to Exit)------------>", end=' ')
+            c = int(input())
+            if c == 0:
+                sys.exit(0)
+            if (os.path.isfile(SSPATH + results[c-1])) == True:
+                with open(SSPATH + results[c - 1], 'r') as exploitFILE:
+                    textFile = exploitFILE.read()
+                    print(textFile)
+                    exploitFILE.close
     elif len(sys.argv) == 1:
-        print("Options Coming Soon!")
-        sys.exit()
+        print("Options Coming Soon")
+        sys.exit(0)
 
