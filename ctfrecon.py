@@ -77,7 +77,7 @@ except getopt.error as err:
     sys.exit(2)
 
 for currentArg, currentValue in args:
-    if currentArg in ("-d", "--deep"):
+    if currentArg in ("-d", "--deep"):  #TODO:errorcheck currentValue to make sure search string is not too short resulting in too much output
         results = deepsearch(currentValue.lower(), openCSV(SSPATH))
         while c != 0:
             if results is not None:  #this is hilarious
