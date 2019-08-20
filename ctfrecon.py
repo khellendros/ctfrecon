@@ -42,7 +42,7 @@ def deepsearch(searchStr, csvIndex):   #traverse CSV index and search all files 
             with open(exploitsFilePath, 'r') as exploitFILE:
                 try:
                     exploitFileContent = exploitFILE.readlines()
-                    for contentLine in exploitFileContent:              #search through file one line at a time - TODO: display line num found on
+                    for contentLine in exploitFileContent:              #search through file one line at a time - TODO: also search CSV index 
                         contentLine = contentLine.lower()
                         search = contentLine.find(searchStr)
                         if search != -1:
@@ -68,6 +68,7 @@ def deepsearch(searchStr, csvIndex):   #traverse CSV index and search all files 
 ############################MAIN##################################
 
 commandArgs = sys.argv[1:]
+c = 1
 
 try:
     args, argvalue = getopt.getopt(commandArgs, unixOptions, gnuOptions)
@@ -78,17 +79,18 @@ except getopt.error as err:
 for currentArg, currentValue in args:
     if currentArg in ("-d", "--deep"):
         results = deepsearch(currentValue.lower(), openCSV(SSPATH))
-        if results is not None:
-            print("(0 to Exit)------------>", end=' ')
-            c = int(input())
-            if c == 0:
-                sys.exit(0)
-            if (os.path.isfile(SSPATH + results[c-1])) == True:
-                with open(SSPATH + results[c - 1], 'r') as exploitFILE:
-                    textFile = exploitFILE.read()
-                    print(textFile)
-                    exploitFILE.close
-    elif len(sys.argv) == 1:
+        while c != 0:
+            if results is not None:  #this is hilarious
+                print("(0 to Exit)------------>", end=' ')
+                c = int(input())
+                if c == 0:
+                    sys.exit(0)
+                if (os.path.isfile(SSPATH + results[c-1])) == True:
+                    with open(SSPATH + results[c - 1], 'r') as exploitFILE:
+                        textFile = exploitFILE.read()
+                        print(textFile)
+                        exploitFILE.close
+    elif len(sys.argv) == 1:   #this doesn't work
         print("Options Coming Soon")
         sys.exit(0)
 
