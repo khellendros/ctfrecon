@@ -42,7 +42,7 @@ def deepsearch(searchStr, csvIndex):   #traverse CSV index and search all files 
             with open(exploitsFilePath, 'r') as exploitFILE:
                 try:
                     exploitFileContent = exploitFILE.readlines()
-                    for contentLine in exploitFileContent:              #search through file one line at a time - TODO: also search CSV index 
+                    for contentLine in exploitFileContent:              #Search through file one line at a time - TODO: also search CSV index 
                         contentLine = contentLine.lower()
                         search = contentLine.find(searchStr)
                         if search != -1:
