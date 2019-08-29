@@ -90,7 +90,4 @@ for currentArg, currentValue in args:
                         textFile = exploitFILE.read()
                         print(textFile)
                         exploitFILE.close
-    elif len(sys.argv) == 1:   #this doesn't work
-        print("Options Coming Soon")
-        sys.exit(0)
 
