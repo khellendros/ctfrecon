@@ -1,4 +1,6 @@
-import sys, os, getopt
+#! /usr/bin/python3
+
+import sys, os, getopt 
 
 #-------------CSV Identifiers------------
 ID = 0
@@ -29,8 +31,7 @@ def openCSV(PATH):   #open, read all lines from CSV index
     
 
 def deepsearch(searchStr, csvIndex):   #traverse CSV index and search all files referenced for squery
-    x = 0 
-    foundFilePaths = []
+    indexResults = []
 
     print("\nWe're Going Deep!------------------------>SEARCH QUERY: " + searchStr)
     
@@ -46,15 +47,7 @@ def deepsearch(searchStr, csvIndex):   #traverse CSV index and search all files 
                         contentLine = contentLine.lower()
                         search = contentLine.find(searchStr)
                         if search != -1:
-                            print(f"\033[1;32;40m{x+1})\033[1;31;40mFILE: \033[1;32;40m {tmp[FILE]} \033[1;31;40m")
-                            print(f"  DESCRIPTION: \033[1;32;40m {tmp[DESCRIPTION]} \033[1;31;40m")
-                            print(f"  DATE: \033[1;32;40m {tmp[DATE]} \033[1;31;40m")
-                            print(f"  AUTHOR: \033[1;32;40m {tmp[AUTHOR]} \033[1;31;40m")
-                            print(f"  TYPE: \033[1;32;40m {tmp[TYPE]} \033[1;31;40m")
-                            print(f"  PLATFORM: \033[1;32;40m {tmp[PLATFORM]} \033[1;31;40m")
-                            print(f"  PORT: \033[1;32;40m {tmp[PORT]} \n")
-                            foundFilePaths.append(tmp[FILE])
-                            x = x + 1
+                            indexResults.append(tmp)
                             break       #break to prevent duplicate results
                 except:
                     print('Some sort of error occured: ',  sys.exc_info()[0])  #TODO: Do proper error handling here
@@ -63,31 +56,61 @@ def deepsearch(searchStr, csvIndex):   #traverse CSV index and search all files 
                     exploitFILE.close
         else:
             print('Skipping ' + exploitsfilepath + '  Does not exist!')
-    return foundFilePaths
+    return indexResults
 
-############################MAIN##################################
 
-commandArgs = sys.argv[1:]
-c = 1
+def displayResults(rList):
+    select = 1
+    x = 1 
 
-try:
-    args, argvalue = getopt.getopt(commandArgs, unixOptions, gnuOptions)
-except getopt.error as err:
-    print(str(err))
-    sys.exit(2)
+    while select != 0:
+        for r in rList:
+            print(f"\033[1;32;40m{x})\033[1;31;40mFILE: \033[1;32;40m {r[FILE]} \033[1;31;40m")
+            print(f"  DESCRIPTION: \033[1;32;40m {r[DESCRIPTION]} \033[1;31;40m")
+            print(f"  DATE: \033[1;32;40m {r[DATE]} \033[1;31;40m")
+            print(f"  AUTHOR: \033[1;32;40m {r[AUTHOR]} \033[1;31;40m")
+            print(f"  TYPE: \033[1;32;40m {r[TYPE]} \033[1;31;40m")
+            print(f"  PLATFORM: \033[1;32;40m {r[PLATFORM]} \033[1;31;40m")
+            print(f"  PORT: \033[1;32;40m {r[PORT]} \n")
+            x = x + 1
 
-for currentArg, currentValue in args:
-    if currentArg in ("-d", "--deep"):  #TODO:errorcheck currentValue to make sure search string is not too short resulting in too much output
-        results = deepsearch(currentValue.lower(), openCSV(SSPATH))
-        while c != 0:
+        print("(0 to Exit)------------------->", end=' ')
+        select = int(input())
+
+        if select == 0:
+            return 0
+        elif select < x and select > -1:
+            if (os.path.isfile(SSPATH + rList[select - 1][FILE])) == True:
+                with open(SSPATH + rList[select - 1][FILE], 'r') as exploitFILE:
+                    textFile = exploitFILE.read()
+                    print(textFile)  #TODO: needs to use a pager / append results to file
+                    exploitFILE.close()
+        else:
+            print("\nNo such index!\n")
+
+            x = 1
+            
+
+
+if __name__ == "__main__":
+
+    commandArgs = sys.argv[1:]
+
+    try:
+        args, argvalue = getopt.getopt(commandArgs, unixOptions, gnuOptions)
+    except getopt.error as err:
+        print(str(err))
+        sys.exit(2)
+
+    if len(sys.argv) < 2:
+        print("Usage: " + sys.argv[0] + " -d SEARCHQUERY")
+        exit(0)
+
+    for currentArg, currentValue in args:
+        if currentArg in ("-d", "--deep"):  #TODO:errorcheck currentValue to make sure search string is not too short resulting in too much output
+            results = deepsearch(currentValue.lower(), openCSV(SSPATH))
             if results is not None:  #this is hilarious
-                print("(0 to Exit)------------>", end=' ')
-                c = int(input())
-                if c == 0:
-                    sys.exit(0)
-                if (os.path.isfile(SSPATH + results[c-1])) == True:
-                    with open(SSPATH + results[c - 1], 'r') as exploitFILE:
-                        textFile = exploitFILE.read()
-                        print(textFile)
-                        exploitFILE.close
-
+                displayResults(results)
+            else:
+                print("No results found for: " + currentValue)
+            
