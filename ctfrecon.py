@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 
-import sys, os, getopt 
+import sys, os, getopt, pydoc 
 
 #-------------CSV Identifiers------------
 ID = 0
@@ -65,7 +65,7 @@ def displayResults(rList):
 
     while select != 0:
         for r in rList:
-            print(f"\033[1;32;40m{x})\033[1;31;40mFILE: \033[1;32;40m {r[FILE]} \033[1;31;40m")
+            print(f"\n\033[1;32;40m{x})\033[1;31;40mFILE: \033[1;32;40m {r[FILE]} \033[1;31;40m")
             print(f"  DESCRIPTION: \033[1;32;40m {r[DESCRIPTION]} \033[1;31;40m")
             print(f"  DATE: \033[1;32;40m {r[DATE]} \033[1;31;40m")
             print(f"  AUTHOR: \033[1;32;40m {r[AUTHOR]} \033[1;31;40m")
@@ -83,12 +83,12 @@ def displayResults(rList):
             if (os.path.isfile(SSPATH + rList[select - 1][FILE])) == True:
                 with open(SSPATH + rList[select - 1][FILE], 'r') as exploitFILE:
                     textFile = exploitFILE.read()
-                    print(textFile)  #TODO: needs to use a pager / append results to file
+                    pydoc.pager(textFile)
                     exploitFILE.close()
         else:
             print("\nNo such index!\n")
 
-            x = 1
+        x = 1
             
 
 
