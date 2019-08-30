@@ -30,36 +30,51 @@ def openCSV(PATH):   #open, read all lines from CSV index
         sys.exit()
     
 
-def searchExploits(searchStr, csvIndex, searchType):   #traverse CSV index and search all files referenced for squery
+def searchExploits(searchStr, csvIndex):   #traverse CSV index and search all files referenced for squery
     indexResults = [] 
 
-    if(searchType is "d"):
-        print("\nWe're Going Deep!------------------------>SEARCH QUERY: " + searchStr)
+    print("\nWe're Going Deep!------------------------>SEARCH QUERY: " + searchStr)
     
-        for line in csvIndex[1:]:                                           #loop through each line in the index 
-            line.strip('/n')           
-            tmp = line.split(',')                                           #pull each value into a list
-            exploitsFilePath = SSPATH + tmp[FILE]                           #set to current lines file value 
-            if os.path.isfile(exploitsFilePath) == True:                    #make sure file exists, skip if it doesn't
-                with open(exploitsFilePath, 'r') as exploitFILE:
-                    try:
-                        exploitFileContent = exploitFILE.readlines()
-                        for contentLine in exploitFileContent:               
-                            contentLine = contentLine.lower()
-                            search = contentLine.find(searchStr)
-                            if search != -1:
-                                indexResults.append(tmp)
-                                break       #break to prevent duplicate results
-                    except:
-                        print('Some sort of error occured: ',  sys.exc_info()[0])  #TODO: Do proper error handling here
+    for line in csvIndex[1:]:                                           #loop through each line in the index 
+        line.strip('/n')           
+        tmp = line.split(',')                                           #pull each value into a list
+        exploitsFilePath = SSPATH + tmp[FILE]                           #set to current lines file value 
+        if os.path.isfile(exploitsFilePath) == True:                    #make sure file exists, skip if it doesn't
+            with open(exploitsFilePath, 'r') as exploitFILE:
+                try:
+                    exploitFileContent = exploitFILE.readlines()
+                    for contentLine in exploitFileContent:               
+                        contentLine = contentLine.lower()
+                        search = contentLine.find(searchStr)
 
-                        exploitFileContent.clear
-                        exploitFILE.close
-            else:
-                print('Skipping ' + exploitsfilepath + '  Does not exist!')
+                        if search != -1:
+                            indexResults.append(tmp)
+                            break       #break to prevent duplicate results
+                except:
+                    print('Some sort of error occured: ',  sys.exc_info()[0])  #TODO: Do proper error handling here
 
+                    exploitFileContent.clear
+                    exploitFILE.close
+        else:
+            print('Skipping ' + exploitsfilepath + '  Does not exist!')
+    
     return indexResults
 
+
+def searchExploitsIndex(searchStr, csvIndex):
+    indexResults = []
+
+    print("\nSearching the index....................>SEARCH QUERY: " + searchStr)
+
+    for line in csvIndex[1:]:
+        lineLower = line.lower()
+        search = lineLower.find(searchStr)
+
+        if search != -1:
+            tmp = line.split(',') 
+            indexResults.append(tmp)
+
+    return indexResults
 
 def displayResults(rList):
     select = 1
@@ -67,13 +82,13 @@ def displayResults(rList):
 
     while select != 0:
         for r in rList:
-            print(f"\n\033[1;32;40m{x})\033[1;31;40mFILE: \033[1;32;40m {r[FILE]} \033[1;31;40m")
+            print(f"\033[1;32;40m{x})\033[1;31;40mFILE: \033[1;32;40m {r[FILE]} \033[1;31;40m")
             print(f"  DESCRIPTION: \033[1;32;40m {r[DESCRIPTION]} \033[1;31;40m")
             print(f"  DATE: \033[1;32;40m {r[DATE]} \033[1;31;40m")
             print(f"  AUTHOR: \033[1;32;40m {r[AUTHOR]} \033[1;31;40m")
             print(f"  TYPE: \033[1;32;40m {r[TYPE]} \033[1;31;40m")
             print(f"  PLATFORM: \033[1;32;40m {r[PLATFORM]} \033[1;31;40m")
-            print(f"  PORT: \033[1;32;40m {r[PORT]} \n")
+            print(f"  PORT: \033[1;32;40m {r[PORT]}")
             x = x + 1
 
         print("(0 to Exit)------------------->", end=' ')
@@ -114,10 +129,10 @@ if __name__ == "__main__":
     for currentArg, currentValue in args:
         if currentArg in ("-d", "--deep"):
             checkLen(currentValue)
-            results = searchExploits(currentValue.lower(), openCSV(SSPATH), "d")
+            results = searchExploits(currentValue.lower(), openCSV(SSPATH))
         elif currentArg in ("-i", "--index"):
             checkLen(currentValue)
-            results = searchExploits(currentValue.lower(), openCSV(SSPATH), "i")
+            results = searchExploitsIndex(currentValue.lower(), openCSV(SSPATH))
 
         if len(results) > 0: #this is hilarious
             displayResults(results)
