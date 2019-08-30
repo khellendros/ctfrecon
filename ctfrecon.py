@@ -2,7 +2,7 @@
 
 import sys, os, getopt, pydoc 
 
-#-------------CSV Identifiers------------
+#-------------CSV Identifiers--------------
 ID = 0
 FILE = 1
 DESCRIPTION = 2
