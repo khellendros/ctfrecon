@@ -1,6 +1,7 @@
 #! /usr/bin/python3
 
 import sys, os, getopt, pydoc 
+from libnmap.parser import NmapParser
 
 #-------------CSV Identifiers--------------
 ID = 0
@@ -60,21 +61,47 @@ def searchExploits(searchStr, csvIndex):   #traverse CSV index and search all fi
     
     return indexResults
 
-
 def searchExploitsIndex(searchStr, csvIndex):
     indexResults = []
 
-    print("\nSearching the index....................>SEARCH QUERY: " + searchStr)
+    print("\nSearching the index---------------------->SEARCH QUERY: " + searchStr)
 
     for line in csvIndex[1:]:
         lineLower = line.lower()
         search = lineLower.find(searchStr)
 
-        if search != -1:
-            tmp = line.split(',') 
+        if search != -1:               
+            tmp = line.split(',')    #turning into multidimensional array so displayResults can read it correctly
             indexResults.append(tmp)
 
     return indexResults
+
+def parseNmap():
+    #if os.path.isfile(xmlNmapPath):
+        nmap_data = NmapParser.parse_fromfile('/home/khellendros/SCANS/192.168.1.1/192.168.1.1-tcp.xml')
+        for host in nmap_data.hosts:
+            print("\nHost Address: {0}".format(host.address))
+            if(host.os_fingerprinted):
+                print("OS Fingerprint: {0}".format(host.os_fingerprint))
+
+            osMatches = host.os_class_probabilities()
+            for osMatch in osMatches:
+                if osMatch.cpelist:
+                    for osCpe in osMatch.cpelist:
+                        print("Product: " + osCpe.get_product() + " Version: " + osCpe.get_version())
+            print("MAC: {0}".format(host.mac))
+            print("Vendor: {0}".format(host.vendor))
+            print("--------------------------------")
+            if host.services:
+                for s in host.services:
+                    if s.cpelist:
+                        for c in s.cpelist:
+                            print("\nProduct: " + c.get_product() + " Version: " + c.get_version())
+                    print("Service: {0}".format(s.service))
+                    print("Service Fingerprint: {0}".format(s.servicefp))
+                    print("Port: {0}".format(s.port))
+                    print("State: {0}".format(s.state))
+                    print("--------------------------------")
 
 def displayResults(rList):
     select = 1
@@ -123,18 +150,30 @@ if __name__ == "__main__":
         sys.exit(2)
 
     if len(sys.argv) < 2:
-        print("Usage: " + sys.argv[0] + " -d SEARCHQUERY")
+        print("Usage: Deep Search:" + sys.argv[0] + " -d SEARCHQUERY")
+        print("      Index Search:" + sys.argv[0] + " -i SEARCHQUERY")
+        parseNmap()
         exit(0)
 
     for currentArg, currentValue in args:
-        if currentArg in ("-d", "--deep"):
+        if currentArg in ("-d", "--deep"):  #deep also runs index search
             checkLen(currentValue)
             results = searchExploits(currentValue.lower(), openCSV(SSPATH))
+            indexResults = searchExploitsIndex(currentValue.lower(), openCSV(SSPATH))
+            #remove duplicate results
+            for x in range(len(results)-1):
+                for y in range(len(indexResults)-1):
+                    if results[x] == indexResults[y]:
+                        print("Deleting: " + indexResults[y][FILE])
+                        del indexResults[y]
+            for x in range(len(indexResults)-1):
+                results.append(indexResults[x])
+
         elif currentArg in ("-i", "--index"):
             checkLen(currentValue)
             results = searchExploitsIndex(currentValue.lower(), openCSV(SSPATH))
 
-        if len(results) > 0: #this is hilarious
+        if len(results) > 0:
             displayResults(results)
         else:
             print("No results found for: " + currentValue)
