@@ -18,9 +18,21 @@ SSPATH = '/usr/share/exploitdb/' #searchsploit root dir
 unixOptions = "d:i:h"
 gnuOptions = ["deep=", "index=", "help"]
 
+class nmapParsedHost:
+    hostAddress = ''
+    hostMAC = ''
+    hostVendor = ''
+    osFingerprint = ''
+    osCPEproduct = []
+    osCPEversion = []
+    serviceCPEproduct = []
+    serviceCPEversion = []
+    serviceName = []
+    serviceFingerprint = []
+    servicePort = []
+    serviceState = []
 
-
-def openCSV(PATH):   #open, read all lines from CSV index
+def open_CSV(PATH):   #open, read all lines from CSV index
     if os.path.isfile(PATH + 'files_exploits.csv') == True:
         exploitCSV = open(PATH + 'files_exploits.csv')
         lines = exploitCSV.readlines()
@@ -31,7 +43,7 @@ def openCSV(PATH):   #open, read all lines from CSV index
         sys.exit()
     
 
-def searchExploits(searchStr, csvIndex):   #traverse CSV index and search all files referenced for squery
+def search_exploits(searchStr, csvIndex):   #traverse CSV index and search all files referenced for squery
     indexResults = [] 
 
     print("\nWe're Going Deep!------------------------>SEARCH QUERY: " + searchStr)
@@ -61,7 +73,7 @@ def searchExploits(searchStr, csvIndex):   #traverse CSV index and search all fi
     
     return indexResults
 
-def searchExploitsIndex(searchStr, csvIndex):
+def search_exploits_index(searchStr, csvIndex):
     indexResults = []
 
     print("\nSearching the index---------------------->SEARCH QUERY: " + searchStr)
@@ -76,34 +88,45 @@ def searchExploitsIndex(searchStr, csvIndex):
 
     return indexResults
 
-def parseNmap():
+def parse_nmap():
+        parsedHosts = []
+        parsedHosts = nmapParsedHost
+        x = 0
+        y = 0
     #if os.path.isfile(xmlNmapPath):
         nmap_data = NmapParser.parse_fromfile('/home/khellendros/SCANS/192.168.1.1/192.168.1.1-tcp.xml')
         for host in nmap_data.hosts:
-            print("\nHost Address: {0}".format(host.address))
+            parsedHosts[x].hostAddress = host.address                          #Host IP address
+            parsedHosts[x].hostVendor = host.vendor                            #Host Vendor
+            parsedHosts[x].hostMAC = host.mac                                  #Host MAC Address
+
             if(host.os_fingerprinted):
-                print("OS Fingerprint: {0}".format(host.os_fingerprint))
+                parsedHosts[x].osFingerprint = host.os_fingerprint             #OS Fingerprint
 
             osMatches = host.os_class_probabilities()
+            #OS Matches CPE Parse
             for osMatch in osMatches:
                 if osMatch.cpelist:
                     for osCpe in osMatch.cpelist:
-                        print("Product: " + osCpe.get_product() + " Version: " + osCpe.get_version())
-            print("MAC: {0}".format(host.mac))
-            print("Vendor: {0}".format(host.vendor))
-            print("--------------------------------")
+                        parsedHosts[x].osCPEproduct[y] = osCpe.get_product()      #OS CPE Product
+                        parsedHosts[x].osCPEversion[y] = osCpe.get_version()      #OS CPE Version
+                        y += 1
+            y = 0
+            #Service Parse
             if host.services:
                 for s in host.services:
                     if s.cpelist:
                         for c in s.cpelist:
-                            print("\nProduct: " + c.get_product() + " Version: " + c.get_version())
-                    print("Service: {0}".format(s.service))
-                    print("Service Fingerprint: {0}".format(s.servicefp))
-                    print("Port: {0}".format(s.port))
-                    print("State: {0}".format(s.state))
-                    print("--------------------------------")
+                            parsedHosts[x].serviceCPEproduct[y] = c.get_product() #Service CPE Product
+                            parsedHosts[x].serviceCPEversion[y] = c.get_version() #Service CPE Version
+                    parsedHosts[x].serviceName[y] = s.service                     #Service name
+                    parsedHosts[x].serviceFingerprint[y] = s.servicefp            #Service fingerprint
+                    parsedHosts[x].servicePort[y] = s.port                        #Service port
+                    parsedHosts[x].serviceState[y] = s.state                      #Service state(open/close)
+                    y += 1
+            x += 1
 
-def displayResults(rList):
+def display_results(rList):
     select = 1
     x = 1 
 
@@ -134,7 +157,7 @@ def displayResults(rList):
 
         x = 1
             
-def checkLen(someString):
+def check_len(someString):
     if len(someString) < 4:
         print("Search string too short!")
         exit(0)
@@ -152,14 +175,14 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: Deep Search:" + sys.argv[0] + " -d SEARCHQUERY")
         print("      Index Search:" + sys.argv[0] + " -i SEARCHQUERY")
-        parseNmap()
+        #parse_nmap()
         exit(0)
 
     for currentArg, currentValue in args:
         if currentArg in ("-d", "--deep"):  #deep also runs index search
-            checkLen(currentValue)
-            results = searchExploits(currentValue.lower(), openCSV(SSPATH))
-            indexResults = searchExploitsIndex(currentValue.lower(), openCSV(SSPATH))
+            check_len(currentValue)
+            results = search_exploits(currentValue.lower(), open_CSV(SSPATH))
+            indexResults = search_exploits_index(currentValue.lower(), open_CSV(SSPATH))
             #remove duplicate results
             for x in range(len(results)-1):
                 for y in range(len(indexResults)-1):
@@ -170,8 +193,8 @@ if __name__ == "__main__":
                 results.append(indexResults[x])
 
         elif currentArg in ("-i", "--index"):
-            checkLen(currentValue)
-            results = searchExploitsIndex(currentValue.lower(), openCSV(SSPATH))
+            check_len(currentValue)
+            results = search_exploits_index(currentValue.lower(), open_CSV(SSPATH))
 
         if len(results) > 0:
             displayResults(results)
