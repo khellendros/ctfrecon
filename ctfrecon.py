@@ -15,8 +15,8 @@ PORT = 7
 #-----------------------------------------
 SSPATH = '/usr/share/exploitdb/' #searchsploit root dir
 #------------------OPTIONS----------------
-unixOptions = "d:i:h"
-gnuOptions = ["deep=", "index=", "help"]
+unixOptions = "d:i:x"
+gnuOptions = ["deep=", "index=", "nmapXML="]
 
 class nmapParsedHost:
     def __init__(self, id):
@@ -109,7 +109,7 @@ def parse_nmap():
     parsedHosts = {}
     x = 0
     if os.path.isfile(xmlNmapPath):
-        nmap_data = NmapParser.parse_fromfile('/home/khellendros/SCANS/192.168.1.1/192.168.1.1-tcp.xml')
+        nmap_data = NmapParser.parse_fromfile(xmlNmapPath)
         for host in nmap_data.hosts:
             parsedHosts[x] = nmapParsedHost(x)
             parsedHosts[x].hostAddress = host.address                           #Host IP address
@@ -128,7 +128,7 @@ def parse_nmap():
                         parsedHosts[x].addOScpeVersion(osCpe.get_version())     #OS CPE Version
                         y += 1
             y = 0
-            #Service Parse
+            #Services Parse
             if host.services:
                 for s in host.services:
                     if s.cpelist:
@@ -177,6 +177,17 @@ def check_len(someString):
         print("Search string too short!")
         exit(0)
 
+def remove_duplicates(results1, results2):
+    #remove duplicate results
+    for x in range(len(results1)-1):
+        for y in range(len(results2)-1):
+            if results1[x] == results2[y]:
+                del indexResults[y]
+        for x in range(len(indexResults)-1):
+            results1.append(results2[x])
+    return results1
+
+
 if __name__ == "__main__":
 
     commandArgs = sys.argv[1:]
@@ -190,31 +201,31 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: Deep Search:" + sys.argv[0] + " -d SEARCHQUERY")
         print("      Index Search:" + sys.argv[0] + " -i SEARCHQUERY")
-        parse_nmap()
+        print("   Nmap XML Search:" + sys.argv[0] + " -x XML FILE")
+        #parse_nmap()
         exit(0)
 
     for currentArg, currentValue in args:
-        if currentArg in ("-d", "--deep"):  #deep also runs index search
+        if currentArg in ("-x", "--nmapXML"):
+            results = search_exploits(parse_nmap(currentValue), open_CSV(SSPATH))
+            indexResults = search_exploits_index(parse_nmap(currentValue), open_CSV(SSPATH))
+            remove_duplicates(results, indexResults)
+            break
+        elif currentArg in ("-d", "--deep"):  #deep also runs index search
             check_len(currentValue)
             results = search_exploits(currentValue.lower(), open_CSV(SSPATH))
             indexResults = search_exploits_index(currentValue.lower(), open_CSV(SSPATH))
-            #remove duplicate results
-            for x in range(len(results)-1):
-                for y in range(len(indexResults)-1):
-                    if results[x] == indexResults[y]:
-                        print("Deleting: " + indexResults[y][FILE])
-                        del indexResults[y]
-            for x in range(len(indexResults)-1):
-                results.append(indexResults[x])
-
+            remove_duplicates(results, indexResults)
+            break
         elif currentArg in ("-i", "--index"):
             check_len(currentValue)
             results = search_exploits_index(currentValue.lower(), open_CSV(SSPATH))
+            break
 
-        if len(results) > 0:
-            displayResults(results)
-        else:
-            print("No results found for: " + currentValue)
+    if len(results) > 0:
+        display_results(results)
+    else:
+        print("No results found for: " + currentValue)
 
 
 	
