@@ -19,18 +19,35 @@ unixOptions = "d:i:h"
 gnuOptions = ["deep=", "index=", "help"]
 
 class nmapParsedHost:
-    hostAddress = ''
-    hostMAC = ''
-    hostVendor = ''
-    osFingerprint = ''
-    osCPEproduct = []
-    osCPEversion = []
-    serviceCPEproduct = []
-    serviceCPEversion = []
-    serviceName = []
-    serviceFingerprint = []
-    servicePort = []
-    serviceState = []
+    def __init__(self, id):
+        self.hostAddress = ''
+        self.hostMAC = ''
+        self.hostVendor = ''
+        self.osFingerprint = ''
+        self.osCPEproduct = []
+        self.osCPEversion = []
+        self.serviceCPEproduct = []
+        self.serviceCPEversion = []
+        self.serviceName = []
+        self.serviceFingerprint = []
+        self.servicePort = []
+        self.serviceState = []
+    def addOScpeProduct(self, cpeProduct):
+        self.osCPEproduct.append(cpeProduct)
+    def addOScpeVersion(self, cpeVersion):
+        self.osCPEversion.append(cpeVersion)
+    def addServiceName(self, sName):
+        self.serviceName.append(sName)
+    def addServiceFingerprint(self, sFingerprint):
+        self.serviceFingerprint.append(sFingerprint)
+    def addServicePort(self, sPort):
+        self.servicePort.append(sPort)
+    def addServiceState(self, sState):
+        self.serviceState.append(sState)
+    def addServiceCPEproduct(self, cpeProduct):
+        self.serviceCPEproduct.append(cpeProduct)
+    def addServiceCPEversion(self, cpeVersion):
+        self.serviceCPEversion.append(cpeVersion)
 
 def open_CSV(PATH):   #open, read all lines from CSV index
     if os.path.isfile(PATH + 'files_exploits.csv') == True:
@@ -89,27 +106,26 @@ def search_exploits_index(searchStr, csvIndex):
     return indexResults
 
 def parse_nmap():
-        parsedHosts = []
-        parsedHosts = nmapParsedHost
-        x = 0
-        y = 0
-    #if os.path.isfile(xmlNmapPath):
+    parsedHosts = {}
+    x = 0
+    if os.path.isfile(xmlNmapPath):
         nmap_data = NmapParser.parse_fromfile('/home/khellendros/SCANS/192.168.1.1/192.168.1.1-tcp.xml')
         for host in nmap_data.hosts:
-            parsedHosts[x].hostAddress = host.address                          #Host IP address
-            parsedHosts[x].hostVendor = host.vendor                            #Host Vendor
-            parsedHosts[x].hostMAC = host.mac                                  #Host MAC Address
+            parsedHosts[x] = nmapParsedHost(x)
+            parsedHosts[x].hostAddress = host.address                           #Host IP address
+            parsedHosts[x].hostVendor = host.vendor                             #Host Vendor
+            parsedHosts[x].hostMAC = host.mac                                   #Host MAC Address
 
             if(host.os_fingerprinted):
-                parsedHosts[x].osFingerprint = host.os_fingerprint             #OS Fingerprint
+                parsedHosts[x].osFingerprint = host.os_fingerprint              #OS Fingerprint
 
             osMatches = host.os_class_probabilities()
             #OS Matches CPE Parse
             for osMatch in osMatches:
                 if osMatch.cpelist:
                     for osCpe in osMatch.cpelist:
-                        parsedHosts[x].osCPEproduct[y] = osCpe.get_product()      #OS CPE Product
-                        parsedHosts[x].osCPEversion[y] = osCpe.get_version()      #OS CPE Version
+                        parsedHosts[x].addOScpeProduct(osCpe.get_product())     #OS CPE Product
+                        parsedHosts[x].addOScpeVersion(osCpe.get_version())     #OS CPE Version
                         y += 1
             y = 0
             #Service Parse
@@ -117,13 +133,12 @@ def parse_nmap():
                 for s in host.services:
                     if s.cpelist:
                         for c in s.cpelist:
-                            parsedHosts[x].serviceCPEproduct[y] = c.get_product() #Service CPE Product
-                            parsedHosts[x].serviceCPEversion[y] = c.get_version() #Service CPE Version
-                    parsedHosts[x].serviceName[y] = s.service                     #Service name
-                    parsedHosts[x].serviceFingerprint[y] = s.servicefp            #Service fingerprint
-                    parsedHosts[x].servicePort[y] = s.port                        #Service port
-                    parsedHosts[x].serviceState[y] = s.state                      #Service state(open/close)
-                    y += 1
+                            parsedHosts[x].addServiceCPEproduct(c.get_product())#Service CPE Product
+                            parsedHosts[x].addServiceCPEversion(c.get_version())#Service CPE Version
+                    parsedHosts[x].addServiceName(s.service)                    #Service name
+                    parsedHosts[x].addServiceFingerprint(s.servicefp)           #Service fingerprint
+                    parsedHosts[x].addServicePort(s.port)                       #Service port
+                    parsedHosts[x].addServiceState(s.state)                     #Service state(open/close)
             x += 1
 
 def display_results(rList):
@@ -175,7 +190,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: Deep Search:" + sys.argv[0] + " -d SEARCHQUERY")
         print("      Index Search:" + sys.argv[0] + " -i SEARCHQUERY")
-        #parse_nmap()
+        parse_nmap()
         exit(0)
 
     for currentArg, currentValue in args:
