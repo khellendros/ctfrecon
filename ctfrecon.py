@@ -87,7 +87,6 @@ def search_exploits(searchStr, csvIndex):   #traverse CSV index and search all f
                     exploitFILE.close
         else:
             print('Skipping ' + exploitsfilepath + '  Does not exist!')
-    
     return indexResults
 
 def search_exploits_index(searchStr, csvIndex):
@@ -102,7 +101,6 @@ def search_exploits_index(searchStr, csvIndex):
         if search != -1:               
             tmp = line.split(',')    #turning into multidimensional array so displayResults can read it correctly
             indexResults.append(tmp)
-
     return indexResults
 
 def parse_nmap(xmlNmapPath):
@@ -135,7 +133,8 @@ def parse_nmap(xmlNmapPath):
                     parsedHosts[x].addServicePort(s.port)                       #Service port
                     parsedHosts[x].addServiceState(s.state)                     #Service state(open/close)
             x += 1
-    return parsedHosts[0].serviceCPEproduct[0] + " " + parsedHosts[0].serviceCPEversion[0]
+
+    return parsedHosts[0].serviceCPEproduct[0] + " < " + parsedHosts[0].serviceCPEversion[0]
 
 def display_results(rList):
     select = 1
@@ -178,9 +177,9 @@ def remove_duplicates(results1, results2):
     for x in range(len(results1)-1):
         for y in range(len(results2)-1):
             if results1[x] == results2[y]:
-                del indexResults[y]
-        for x in range(len(indexResults)-1):
-            results1.append(results2[x])
+                del results2[y]
+    for x in range(len(results2)-1):
+        results1.append(results2[x])
     return results1
 
 
@@ -204,20 +203,20 @@ if __name__ == "__main__":
         if currentArg in ("-x", "--nmapXML"):
             results = search_exploits(parse_nmap(currentValue), open_CSV(SSPATH))
             indexResults = search_exploits_index(parse_nmap(currentValue), open_CSV(SSPATH))
-            remove_duplicates(results, indexResults)
+            finalResults = remove_duplicates(results, indexResults)
             break
         elif currentArg in ("-d", "--deep"):  #deep also runs index search
             check_len(currentValue)
             results = search_exploits(currentValue.lower(), open_CSV(SSPATH))
             indexResults = search_exploits_index(currentValue.lower(), open_CSV(SSPATH))
-            remove_duplicates(results, indexResults)
+            finalResults = remove_duplicates(results, indexResults)
             break
         elif currentArg in ("-i", "--index"):
             check_len(currentValue)
-            results = search_exploits_index(currentValue.lower(), open_CSV(SSPATH))
+            finalResults = search_exploits_index(currentValue.lower(), open_CSV(SSPATH))
             break
 
-    if len(results) > 0:
-        display_results(results)
+    if len(finalResults) > 0:
+        display_results(finalResults)
     else:
         print("No results found for: " + currentValue)
