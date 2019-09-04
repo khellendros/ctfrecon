@@ -75,7 +75,7 @@ def search_exploits(searchStr, csvIndex):   #traverse CSV index and search all f
                     exploitFileContent = exploitFILE.readlines()
                     for contentLine in exploitFileContent:               
                         contentLine = contentLine.lower()
-                        search = contentLine.find(searchStr)
+                        search = contentLine.find(searchStr.lower())
 
                         if search != -1:
                             indexResults.append(tmp)
@@ -96,7 +96,7 @@ def search_exploits_index(searchStr, csvIndex):
 
     for line in csvIndex[1:]:
         lineLower = line.lower()
-        search = lineLower.find(searchStr)
+        search = lineLower.find(searchStr.lower())
 
         if search != -1:               
             tmp = line.split(',')    #turning into multidimensional array so displayResults can read it correctly
@@ -109,7 +109,7 @@ def parse_nmap(xmlNmapPath):
     if os.path.isfile(xmlNmapPath):
         nmap_data = NmapParser.parse_fromfile(xmlNmapPath)
         for host in nmap_data.hosts:
-            parsedHosts.append(nmapParsedHost(host.address, host.vendor, host.mac)) 
+            parsedHosts.append(nmapParsedHost(host.address, host.mac, host.vendor)) #create class instance as object in array parsedHosts and initialize first 3 elements
 
             if(host.os_fingerprinted):
                 parsedHosts[x].osFingerprint = host.os_fingerprint              #OS Fingerprint
@@ -133,8 +133,7 @@ def parse_nmap(xmlNmapPath):
                     parsedHosts[x].addServicePort(s.port)                       #Service port
                     parsedHosts[x].addServiceState(s.state)                     #Service state(open/close)
             x += 1
-
-    return parsedHosts[0].serviceCPEproduct[0] + " < " + parsedHosts[0].serviceCPEversion[0]
+    return parsedHosts 
 
 def display_results(rList):
     select = 1
@@ -201,19 +200,29 @@ if __name__ == "__main__":
 
     for currentArg, currentValue in args:
         if currentArg in ("-x", "--nmapXML"):
-            results = search_exploits(parse_nmap(currentValue), open_CSV(SSPATH))
-            indexResults = search_exploits_index(parse_nmap(currentValue), open_CSV(SSPATH))
+            results = []
+            indexResults = []
+            parsedHosts = parse_nmap(currentValue) 
+            for host in parsedHosts:
+                for x in range(len(host.serviceCPEproduct)):
+                    results.extend(search_exploits(host.serviceCPEproduct[x] + " < " + host.serviceCPEversion[x], open_CSV(SSPATH)))
+                    indexResults.extend(search_exploits_index(host.serviceCPEproduct[x] + " < " + host.serviceCPEversion[x], open_CSV(SSPATH)))
+                for x in range(len(host.osCPEproduct)):
+                    results.extend(search_exploits(host.osCPEproduct[x] + " < " + host.osCPEversion[x], open_CSV(SSPATH)))
+                    indexResults.extend(search_exploits_index(host.osCPEproduct[x] + " < " + host.osCPEversion[x], open_CSV(SSPATH)))
+                results.extend(search_exploits(host.hostVendor, open_CSV(SSPATH)))
+                results.extend(search_exploits_index(host.hostVendor, open_CSV(SSPATH)))
             finalResults = remove_duplicates(results, indexResults)
             break
         elif currentArg in ("-d", "--deep"):  #deep also runs index search
             check_len(currentValue)
-            results = search_exploits(currentValue.lower(), open_CSV(SSPATH))
-            indexResults = search_exploits_index(currentValue.lower(), open_CSV(SSPATH))
+            results = search_exploits(currentValue, open_CSV(SSPATH))
+            indexResults = search_exploits_index(currentValue, open_CSV(SSPATH))
             finalResults = remove_duplicates(results, indexResults)
             break
         elif currentArg in ("-i", "--index"):
             check_len(currentValue)
-            finalResults = search_exploits_index(currentValue.lower(), open_CSV(SSPATH))
+            finalResults = search_exploits_index(currentValue, open_CSV(SSPATH))
             break
 
     if len(finalResults) > 0:
