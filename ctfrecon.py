@@ -140,6 +140,8 @@ def parse_nmap():
                     parsedHosts[x].addServicePort(s.port)                       #Service port
                     parsedHosts[x].addServiceState(s.state)                     #Service state(open/close)
             x += 1
+            indexResults1 = search_exploits_index(parsedHosts[0].serviceCPEproduct[0] + " " + parsedHosts[0].serviceCPEversion[0], csvIndex)
+            return indexResults1
 
 def display_results(rList):
     select = 1
@@ -226,8 +228,3 @@ if __name__ == "__main__":
         display_results(results)
     else:
         print("No results found for: " + currentValue)
-
-
-	
-
-
