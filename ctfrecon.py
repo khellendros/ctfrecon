@@ -15,18 +15,18 @@ PORT = 7
 #-----------------------------------------
 SSPATH = '/usr/share/exploitdb/' #searchsploit root dir
 #------------------OPTIONS----------------
-unixOptions = "d:i:x"
+unixOptions = "d:i:x:"
 gnuOptions = ["deep=", "index=", "nmapXML="]
 
 class nmapParsedHost:
-    def __init__(self, id):
-        self.hostAddress = ''
-        self.hostMAC = ''
-        self.hostVendor = ''
-        self.osFingerprint = ''
-        self.osCPEproduct = []
-        self.osCPEversion = []
-        self.serviceCPEproduct = []
+    def __init__(self, hostAddress=None, hostMAC=None, hostVendor=None, osFingerprint=None):
+        self.hostAddress = hostAddress 
+        self.hostMAC = hostMAC 
+        self.hostVendor = hostVendor 
+        self.osFingerprint = osFingerprint 
+        self.osCPEproduct = [] 
+        self.osCPEversion = [] 
+        self.serviceCPEproduct = [] 
         self.serviceCPEversion = []
         self.serviceName = []
         self.serviceFingerprint = []
@@ -105,16 +105,13 @@ def search_exploits_index(searchStr, csvIndex):
 
     return indexResults
 
-def parse_nmap():
-    parsedHosts = {}
+def parse_nmap(xmlNmapPath):
+    parsedHosts = [] 
     x = 0
     if os.path.isfile(xmlNmapPath):
         nmap_data = NmapParser.parse_fromfile(xmlNmapPath)
         for host in nmap_data.hosts:
-            parsedHosts[x] = nmapParsedHost(x)
-            parsedHosts[x].hostAddress = host.address                           #Host IP address
-            parsedHosts[x].hostVendor = host.vendor                             #Host Vendor
-            parsedHosts[x].hostMAC = host.mac                                   #Host MAC Address
+            parsedHosts.append(nmapParsedHost(host.address, host.vendor, host.mac)) 
 
             if(host.os_fingerprinted):
                 parsedHosts[x].osFingerprint = host.os_fingerprint              #OS Fingerprint
@@ -126,8 +123,6 @@ def parse_nmap():
                     for osCpe in osMatch.cpelist:
                         parsedHosts[x].addOScpeProduct(osCpe.get_product())     #OS CPE Product
                         parsedHosts[x].addOScpeVersion(osCpe.get_version())     #OS CPE Version
-                        y += 1
-            y = 0
             #Services Parse
             if host.services:
                 for s in host.services:
@@ -140,8 +135,7 @@ def parse_nmap():
                     parsedHosts[x].addServicePort(s.port)                       #Service port
                     parsedHosts[x].addServiceState(s.state)                     #Service state(open/close)
             x += 1
-            indexResults1 = search_exploits_index(parsedHosts[0].serviceCPEproduct[0] + " " + parsedHosts[0].serviceCPEversion[0], csvIndex)
-            return indexResults1
+    return parsedHosts[0].serviceCPEproduct[0] + " " + parsedHosts[0].serviceCPEversion[0]
 
 def display_results(rList):
     select = 1
@@ -203,8 +197,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: Deep Search:" + sys.argv[0] + " -d SEARCHQUERY")
         print("      Index Search:" + sys.argv[0] + " -i SEARCHQUERY")
-        print("   Nmap XML Search:" + sys.argv[0] + " -x XML FILE")
-        #parse_nmap()
+        print("   Nmap XML Search:" + sys.argv[0] + " -x XML_FILE")
         exit(0)
 
     for currentArg, currentValue in args:
