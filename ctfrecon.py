@@ -60,11 +60,9 @@ def open_CSV(PATH):   #open, read all lines from CSV index
         sys.exit()
     
 
-def search_exploits(searchStr, csvIndex):   #traverse CSV index and search all files referenced for squery
+def search_exploits(searchStr, csvIndex):   #traverse CSV index and search all files referenced for searchStr - can be dict or string
     indexResults = [] 
 
-    print("\nWe're Going Deep!------------------------>SEARCH QUERY: " + searchStr)
-    
     for line in csvIndex[1:]:                                           #loop through each line in the index 
         line.strip('/n')           
         tmp = line.split(',')                                           #pull each value into a list
@@ -72,11 +70,16 @@ def search_exploits(searchStr, csvIndex):   #traverse CSV index and search all f
         if os.path.isfile(exploitsFilePath) == True:                    #make sure file exists, skip if it doesn't
             with open(exploitsFilePath, 'r') as exploitFILE:
                 try:
-                    exploitFileContent = exploitFILE.readlines()
-                    for contentLine in exploitFileContent:               
-                        contentLine = contentLine.lower()
-                        search = contentLine.find(searchStr.lower())
-
+                    exploitContent = exploitFILE.read()
+                    exploitContentLower = exploitContent.lower()
+                    if isinstance(searchStr, dict):   #if searchStr is a dictionary, search all values, otherwise search for a string
+                        for searchKey in searchStr:
+                            search = exploitContentLower.find(searchStr[searchKey].lower())
+                            if search != -1:
+                                indexResults.append(tmp)
+                                break
+                    else:
+                        search = exploitContentLower.find(searchStr.lower())
                         if search != -1:
                             indexResults.append(tmp)
                             break       #break to prevent duplicate results
@@ -89,18 +92,23 @@ def search_exploits(searchStr, csvIndex):   #traverse CSV index and search all f
             print('Skipping ' + exploitsfilepath + '  Does not exist!')
     return indexResults
 
-def search_exploits_index(searchStr, csvIndex):
+def search_exploits_index(searchStr, csvIndex):    #search only the CSV index for searchStr - can be dict or string
     indexResults = []
-
-    print("\nSearching the index---------------------->SEARCH QUERY: " + searchStr)
 
     for line in csvIndex[1:]:
         lineLower = line.lower()
-        search = lineLower.find(searchStr.lower())
+        if isinstance(searchStr, dict):
+            for searchKey in searchStr:
+                search = lineLower.find(searchStr[searchKey].lower())
+                if search != -1:
+                    tmp = line.split(',')   #turning into multidimensional array so display_esults can read it correctly
+                    indexResults.append(tmp)
+        else:
+            search = lineLower.find(searchStr.lower())
 
-        if search != -1:               
-            tmp = line.split(',')    #turning into multidimensional array so displayResults can read it correctly
-            indexResults.append(tmp)
+            if search != -1:               
+                tmp = line.split(',')    #turning into multidimensional array so display_esults can read it correctly
+                indexResults.append(tmp)
     return indexResults
 
 def parse_nmap(xmlNmapPath):
@@ -165,7 +173,16 @@ def display_results(rList):
             print("\nNo such index!\n")
 
         x = 1
-            
+           
+def create_nmap_search_list(parsedHosts):
+    searchDict = {}
+    for host in parsedHosts:
+        for x in range(len(host.osCPEproduct)):
+            searchDict[host.hostAddress + " " + host.osCPEproduct[x]] = host.osCPEproduct[x] + " " + host.osCPEversion[x]
+        for x in range(len(host.serviceCPEproduct)):
+            searchDict[host.hostAddress + " " + str(host.servicePort[x])] = host.serviceCPEproduct[x] + " < " + host.serviceCPEversion[x]
+    return searchDict
+
 def check_len(someString):
     if len(someString) < 4:
         print("Search string too short!")
@@ -202,16 +219,9 @@ if __name__ == "__main__":
         if currentArg in ("-x", "--nmapXML"):
             results = []
             indexResults = []
-            parsedHosts = parse_nmap(currentValue) 
-            for host in parsedHosts:
-                for x in range(len(host.serviceCPEproduct)):
-                    results.extend(search_exploits(host.serviceCPEproduct[x] + " < " + host.serviceCPEversion[x], open_CSV(SSPATH)))
-                    indexResults.extend(search_exploits_index(host.serviceCPEproduct[x] + " < " + host.serviceCPEversion[x], open_CSV(SSPATH)))
-                for x in range(len(host.osCPEproduct)):
-                    results.extend(search_exploits(host.osCPEproduct[x] + " < " + host.osCPEversion[x], open_CSV(SSPATH)))
-                    indexResults.extend(search_exploits_index(host.osCPEproduct[x] + " < " + host.osCPEversion[x], open_CSV(SSPATH)))
-                results.extend(search_exploits(host.hostVendor, open_CSV(SSPATH)))
-                results.extend(search_exploits_index(host.hostVendor, open_CSV(SSPATH)))
+            searchDict = create_nmap_search_list(parse_nmap(currentValue))
+            results = search_exploits(searchDict, open_CSV(SSPATH))
+            indexResults = search_exploits_index(searchDict, open_CSV(SSPATH))
             finalResults = remove_duplicates(results, indexResults)
             break
         elif currentArg in ("-d", "--deep"):  #deep also runs index search
