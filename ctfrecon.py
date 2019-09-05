@@ -12,6 +12,8 @@ AUTHOR = 4
 TYPE = 5
 PLATFORM = 6
 PORT = 7
+SEARCHKEY = 8      #only accessible with option -x, otherwise not populated
+SEARCHSTRING = 9   #only accessible with option -x, otherwise not populated
 #-----------------------------------------
 SSPATH = '/usr/share/exploitdb/' #searchsploit root dir
 #------------------OPTIONS----------------
@@ -59,7 +61,6 @@ def open_CSV(PATH):   #open, read all lines from CSV index
         print(PATH + 'files_exploits.csv does not exist!')
         sys.exit()
     
-
 def search_exploits(searchStr, csvIndex):   #traverse CSV index and search all files referenced for searchStr - can be dict or string
     indexResults = [] 
 
@@ -76,6 +77,8 @@ def search_exploits(searchStr, csvIndex):   #traverse CSV index and search all f
                         for searchKey in searchStr:
                             search = exploitContentLower.find(searchStr[searchKey].lower())
                             if search != -1:
+                                tmp.append(searchKey)
+                                tmp.append(searchStr[searchKey])
                                 indexResults.append(tmp)
                                 break
                     else:
@@ -174,7 +177,7 @@ def display_results(rList):
 
         x = 1
            
-def create_nmap_search_list(parsedHosts):
+def create_nmap_search_list(parsedHosts):   #create dictionary search list from nmapParsedHost object
     searchDict = {}
     for host in parsedHosts:
         for x in range(len(host.osCPEproduct)):
@@ -182,6 +185,19 @@ def create_nmap_search_list(parsedHosts):
         for x in range(len(host.serviceCPEproduct)):
             searchDict[host.hostAddress + " " + str(host.servicePort[x])] = host.serviceCPEproduct[x] + " < " + host.serviceCPEversion[x]
     return searchDict
+
+def create_results_files(currentXMLpath, results, parsedHosts):
+    path = os.path.split(currentXMLpath)
+    with open(path[0] + "/exploitDB-results", 'w') as resultsFILE:
+        for r in results:
+            resultsFILE.write("FILE: " + r[FILE] + "\n")
+            resultsFILE.write("DESCRIPTION: " + r[DESCRIPTION] + "\n")
+            resultsFILE.write("DATE: " + r[DATE] + "\n")
+            resultsFILE.write("AUTHOR: " + r[AUTHOR] + "\n")
+            resultsFILE.write("TYPE: " + r[TYPE] + "\n")
+            resultsFILE.write("PLATFORM: " + r[PLATFORM] + "\n")
+            resultsFILE.write("PORT: " + r[PORT] + "\n\n")
+    resultsFILE.close()
 
 def check_len(someString):
     if len(someString) < 4:
@@ -197,7 +213,6 @@ def remove_duplicates(results1, results2):
     for x in range(len(results2)-1):
         results1.append(results2[x])
     return results1
-
 
 if __name__ == "__main__":
 
@@ -219,10 +234,12 @@ if __name__ == "__main__":
         if currentArg in ("-x", "--nmapXML"):
             results = []
             indexResults = []
-            searchDict = create_nmap_search_list(parse_nmap(currentValue))
+            parsedHosts = parse_nmap(currentValue)
+            searchDict = create_nmap_search_list(parsedHosts)
             results = search_exploits(searchDict, open_CSV(SSPATH))
             indexResults = search_exploits_index(searchDict, open_CSV(SSPATH))
             finalResults = remove_duplicates(results, indexResults)
+            create_results_files(currentValue, finalResults, parsedHosts)
             break
         elif currentArg in ("-d", "--deep"):  #deep also runs index search
             check_len(currentValue)
