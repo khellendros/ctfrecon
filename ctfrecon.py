@@ -12,8 +12,8 @@ AUTHOR = 4
 TYPE = 5
 PLATFORM = 6
 PORT = 7
-SEARCHKEY = 8      #only accessible with option -x, otherwise not populated
-SEARCHSTRING = 9   #only accessible with option -x, otherwise not populated
+SEARCHKEY = 8
+SEARCHQUERY = 9
 #-----------------------------------------
 SSPATH = '/usr/share/exploitdb/' #searchsploit root dir
 #------------------OPTIONS----------------
@@ -26,30 +26,24 @@ class nmapParsedHost:
         self.hostMAC = hostMAC 
         self.hostVendor = hostVendor 
         self.osFingerprint = osFingerprint 
-        self.osCPEproduct = [] 
-        self.osCPEversion = [] 
-        self.serviceCPEproduct = [] 
-        self.serviceCPEversion = []
-        self.serviceName = []
-        self.serviceFingerprint = []
-        self.servicePort = []
-        self.serviceState = []
-    def addOScpeProduct(self, cpeProduct):
-        self.osCPEproduct.append(cpeProduct)
-    def addOScpeVersion(self, cpeVersion):
-        self.osCPEversion.append(cpeVersion)
+        self.serviceNames = []
+        self.serviceFingerprints = []
+        self.servicePorts = []
+        self.serviceStates = []
+        self.serviceBanners = []
+        self.OSmatches = []
     def addServiceName(self, sName):
-        self.serviceName.append(sName)
+        self.serviceNames.append(sName)
     def addServiceFingerprint(self, sFingerprint):
-        self.serviceFingerprint.append(sFingerprint)
+        self.serviceFingerprints.append(sFingerprint)
     def addServicePort(self, sPort):
-        self.servicePort.append(sPort)
+        self.servicePorts.append(sPort)
     def addServiceState(self, sState):
-        self.serviceState.append(sState)
-    def addServiceCPEproduct(self, cpeProduct):
-        self.serviceCPEproduct.append(cpeProduct)
-    def addServiceCPEversion(self, cpeVersion):
-        self.serviceCPEversion.append(cpeVersion)
+        self.serviceStates.append(sState)
+    def addServiceBanner(self, serviceBanner):
+        self.serviceBanners.append(serviceBanner)
+    def addOSmatch(self, OSmatch):
+        self.OSmatches.append(OSmatch)
 
 def open_CSV(PATH):   #open, read all lines from CSV index
     if os.path.isfile(PATH + 'files_exploits.csv') == True:
@@ -75,24 +69,25 @@ def search_exploits(searchStr, csvIndex):   #traverse CSV index and search all f
                     exploitContentLower = exploitContent.lower()
                     if isinstance(searchStr, dict):   #if searchStr is a dictionary, search all values, otherwise search for a string
                         for searchKey in searchStr:
-                            search = exploitContentLower.find(searchStr[searchKey].lower())
-                            if search != -1:
-                                tmp.append(searchKey)
-                                tmp.append(searchStr[searchKey])
-                                indexResults.append(tmp)
-                                break
+                            for searchQuery in searchStr[searchKey]:
+                                search = exploitContentLower.find(searchQuery.lower())
+                                if search != -1:
+                                    tmp.append(searchKey)
+                                    tmp.append(searchQuery)
+                                    indexResults.append(tmp)
+                                    break
                     else:
                         search = exploitContentLower.find(searchStr.lower())
                         if search != -1:
+                            tmp.append("Deep search")
+                            tmp.append(searchStr)
                             indexResults.append(tmp)
                             break       #break to prevent duplicate results
                 except:
                     print('Some sort of error occured: ',  sys.exc_info()[0])  #TODO: Do proper error handling here
-
-                    exploitFileContent.clear
-                    exploitFILE.close
+                exploitFILE.close
         else:
-            print('Skipping ' + exploitsfilepath + '  Does not exist!')
+            print('Skipping ' + exploitsFilePath + '  Does not exist!')
     return indexResults
 
 def search_exploits_index(searchStr, csvIndex):    #search only the CSV index for searchStr - can be dict or string
@@ -102,15 +97,20 @@ def search_exploits_index(searchStr, csvIndex):    #search only the CSV index fo
         lineLower = line.lower()
         if isinstance(searchStr, dict):
             for searchKey in searchStr:
-                search = lineLower.find(searchStr[searchKey].lower())
-                if search != -1:
-                    tmp = line.split(',')   #turning into multidimensional array so display_esults can read it correctly
-                    indexResults.append(tmp)
+                for searchQuery in searchStr[searchKey]:
+                    search = lineLower.find(searchQuery.lower())
+                    if search != -1:
+                        tmp = line.split(',')   #turning into multidimensional array so display_esults can read it correctly
+                        tmp.append(searchKey)
+                        tmp.append(searchQuery)
+                        indexResults.append(tmp)
         else:
             search = lineLower.find(searchStr.lower())
 
             if search != -1:               
                 tmp = line.split(',')    #turning into multidimensional array so display_esults can read it correctly
+                tmp.append("Exploits Index Search")
+                tmp.append(searchStr)
                 indexResults.append(tmp)
     return indexResults
 
@@ -123,22 +123,17 @@ def parse_nmap(xmlNmapPath):
             parsedHosts.append(nmapParsedHost(host.address, host.mac, host.vendor)) #create class instance as object in array parsedHosts and initialize first 3 elements
 
             if(host.os_fingerprinted):
-                parsedHosts[x].osFingerprint = host.os_fingerprint              #OS Fingerprint
+                host.osFingerprint = host.os_fingerprint              #OS Fingerprint
+                print(host.osFingerprint)
 
-            osMatches = host.os_class_probabilities()
-            #OS Matches CPE Parse
-            for osMatch in osMatches:
-                if osMatch.cpelist:
-                    for osCpe in osMatch.cpelist:
-                        parsedHosts[x].addOScpeProduct(osCpe.get_product())     #OS CPE Product
-                        parsedHosts[x].addOScpeVersion(osCpe.get_version())     #OS CPE Version
+            #OS Match Parse
+            OSmatches = host.os_class_probabilities()
+            for OSmatch in OSmatches:
+                parsedHosts[x].addOSmatch(OSmatch.osfamily + " " + OSmatch.osgen) #OS Matches + generation
             #Services Parse
             if host.services:
                 for s in host.services:
-                    if s.cpelist:
-                        for c in s.cpelist:
-                            parsedHosts[x].addServiceCPEproduct(c.get_product())#Service CPE Product
-                            parsedHosts[x].addServiceCPEversion(c.get_version())#Service CPE Version
+                    parsedHosts[x].addServiceBanner(s.banner)                   #Service banner (product + version)
                     parsedHosts[x].addServiceName(s.service)                    #Service name
                     parsedHosts[x].addServiceFingerprint(s.servicefp)           #Service fingerprint
                     parsedHosts[x].addServicePort(s.port)                       #Service port
@@ -178,25 +173,38 @@ def display_results(rList):
         x = 1
            
 def create_nmap_search_list(parsedHosts):   #create dictionary search list from nmapParsedHost object
-    searchDict = {}
+    bannerSearchList = []
     for host in parsedHosts:
-        for x in range(len(host.osCPEproduct)):
-            searchDict[host.hostAddress + " " + host.osCPEproduct[x]] = host.osCPEproduct[x] + " " + host.osCPEversion[x]
-        for x in range(len(host.serviceCPEproduct)):
-            searchDict[host.hostAddress + " " + str(host.servicePort[x])] = host.serviceCPEproduct[x] + " < " + host.serviceCPEversion[x]
+        searchDict = {"OS MATCH: ip[" + host.hostAddress + "] " + " mac[" + host.hostMAC + "]" : host.OSmatches}
+    for x in range(len(host.serviceBanners)):
+        if host.serviceBanners[x]:
+            bannerSearch = host.serviceBanners[x].split(" ")
+            bannerSearchList.append(bannerSearch[1] + " < " + bannerSearch[3])
+            bannerSearchList.append(bannerSearch[1] + " " + bannerSearch[3])
+            searchDict.update({"SERVICE MATCH: " + host.hostAddress + ":" + str(host.servicePorts[x]) : bannerSearchList})
     return searchDict
 
-def create_results_files(currentXMLpath, results, parsedHosts):
+def create_results_files(currentXMLpath, results, parsedHosts, searchDict):
     path = os.path.split(currentXMLpath)
     with open(path[0] + "/exploitDB-results", 'w') as resultsFILE:
-        for r in results:
-            resultsFILE.write("FILE: " + r[FILE] + "\n")
-            resultsFILE.write("DESCRIPTION: " + r[DESCRIPTION] + "\n")
-            resultsFILE.write("DATE: " + r[DATE] + "\n")
-            resultsFILE.write("AUTHOR: " + r[AUTHOR] + "\n")
-            resultsFILE.write("TYPE: " + r[TYPE] + "\n")
-            resultsFILE.write("PLATFORM: " + r[PLATFORM] + "\n")
-            resultsFILE.write("PORT: " + r[PORT] + "\n\n")
+        for host in parsedHosts:
+            resultsFILE.write("Host: " + host.hostAddress + "\n")
+            resultsFILE.write("MAC Address: " + host.hostMAC + "\n")
+            resultsFILE.write("Vendor: " + host.hostVendor + "\n")
+            resultsFILE.write("OS Matches: ")
+            for OSmatch in host.OSmatches:
+                resultsFILE.write(OSmatch + "  ")
+
+            for r in results:
+                resultsFILE.write("\n\n" + r[SEARCHKEY] + " | QUERY: "  + r[SEARCHQUERY] + "\n")
+                resultsFILE.write("-----------------------------------------------------------\n")
+                resultsFILE.write("FILE: " + r[FILE] + "\n")
+                resultsFILE.write("DESCRIPTION: " + r[DESCRIPTION] + "\n")
+                resultsFILE.write("DATE: " + r[DATE] + "\n")
+                resultsFILE.write("AUTHOR: " + r[AUTHOR] + "\n")
+                resultsFILE.write("TYPE: " + r[TYPE] + "\n")
+                resultsFILE.write("PLATFORM: " + r[PLATFORM] + "\n")
+                resultsFILE.write("PORT: " + r[PORT] + "\n")
     resultsFILE.close()
 
 def check_len(someString):
@@ -239,7 +247,7 @@ if __name__ == "__main__":
             results = search_exploits(searchDict, open_CSV(SSPATH))
             indexResults = search_exploits_index(searchDict, open_CSV(SSPATH))
             finalResults = remove_duplicates(results, indexResults)
-            create_results_files(currentValue, finalResults, parsedHosts)
+            create_results_files(currentValue, finalResults, parsedHosts, searchDict)
             break
         elif currentArg in ("-d", "--deep"):  #deep also runs index search
             check_len(currentValue)
