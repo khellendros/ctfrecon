@@ -79,7 +79,7 @@ def search_exploits(searchStr, csvIndex):   #traverse CSV index and search all f
                     else:
                         search = exploitContentLower.find(searchStr.lower())
                         if search != -1:
-                            tmp.append("Deep search")
+                            tmp.append("Deep Search")
                             tmp.append(searchStr)
                             indexResults.append(tmp)
                             break       #break to prevent duplicate results
@@ -109,7 +109,7 @@ def search_exploits_index(searchStr, csvIndex):    #search only the CSV index fo
 
             if search != -1:               
                 tmp = line.split(',')    #turning into multidimensional array so display_esults can read it correctly
-                tmp.append("Exploits Index Search")
+                tmp.append("Index Search")
                 tmp.append(searchStr)
                 indexResults.append(tmp)
     return indexResults
@@ -147,6 +147,8 @@ def display_results(rList):
 
     while select != 0:
         for r in rList:
+            print(f"\n\033[1;32;40m{r[SEARCHKEY]} | QUERY: {r[SEARCHQUERY]}")
+            print("------------------------------------------------------")
             print(f"\033[1;32;40m{x})\033[1;31;40mFILE: \033[1;32;40m {r[FILE]} \033[1;31;40m")
             print(f"  DESCRIPTION: \033[1;32;40m {r[DESCRIPTION]} \033[1;31;40m")
             print(f"  DATE: \033[1;32;40m {r[DATE]} \033[1;31;40m")
