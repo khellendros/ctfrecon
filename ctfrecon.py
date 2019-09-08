@@ -230,7 +230,8 @@ def create_results_files(currentXMLpath, results, parsedHosts, searchDict):   #c
         resultsDisplayFILE.write("    results = []\n")
         resultsDisplayFILE.write("    lines = ctfrecon.open_CSV('.exploitDB_results_index.csv')\n")
         resultsDisplayFILE.write("    for line in lines:\n")
-        resultsDisplayFILE.write("        results.append(line.split(','))\n")
+        resultsDisplayFILE.write(r"        lineStrip = line.strip('\n')")
+        resultsDisplayFILE.write("\n        results.append(lineStrip.split(','))\n")
         resultsDisplayFILE.write("    ctfrecon.display_results(results)")
     resultsDisplayFILE.close()
 
