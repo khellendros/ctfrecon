@@ -12,9 +12,10 @@ AUTHOR = 4
 TYPE = 5
 PLATFORM = 6
 PORT = 7
+#---My Identifiers appended to index results list---
 SEARCHKEY = 8
 SEARCHQUERY = 9
-#-----------------------------------------
+
 SSPATH = '/usr/share/exploitdb/' #searchsploit root dir
 #------------------OPTIONS----------------
 unixOptions = "d:i:x:"
@@ -46,21 +47,21 @@ class nmapParsedHost:
         self.OSmatches.append(OSmatch)
 
 def open_CSV(PATH):   #open, read all lines from CSV index
-    if os.path.isfile(PATH + 'files_exploits.csv') == True:
-        exploitCSV = open(PATH + 'files_exploits.csv')
+    if os.path.isfile(PATH) == True:
+        exploitCSV = open(PATH)
         lines = exploitCSV.readlines()
         exploitCSV.close()    
         return lines
     else:
-        print(PATH + 'files_exploits.csv does not exist!')
+        print(PATH + ' does not exist!')
         sys.exit()
     
 def search_exploits(searchStr, csvIndex):   #traverse CSV index and search all files referenced for searchStr - can be dict or string
     indexResults = [] 
 
     for line in csvIndex[1:]:                                           #loop through each line in the index 
-        line.strip('/n')           
-        tmp = line.split(',')                                           #pull each value into a list
+        tmpStrip = line.strip('\n')           
+        tmp = tmpStrip.split(',')                                           #pull each value into a list
         exploitsFilePath = SSPATH + tmp[FILE]                           #set to current lines file value 
         if os.path.isfile(exploitsFilePath) == True:                    #make sure file exists, skip if it doesn't
             with open(exploitsFilePath, 'r') as exploitFILE:
@@ -100,7 +101,8 @@ def search_exploits_index(searchStr, csvIndex):    #search only the CSV index fo
                 for searchQuery in searchStr[searchKey]:
                     search = lineLower.find(searchQuery.lower())
                     if search != -1:
-                        tmp = line.split(',')   #turning into multidimensional array so display_esults can read it correctly
+                        tmpStrip = line.strip('\n')
+                        tmp = tmpStrip.split(',')   #turning into multidimensional array so display_esults can read it correctly
                         tmp.append(searchKey)
                         tmp.append(searchQuery)
                         indexResults.append(tmp)
@@ -123,13 +125,13 @@ def parse_nmap(xmlNmapPath):
             parsedHosts.append(nmapParsedHost(host.address, host.mac, host.vendor)) #create class instance as object in array parsedHosts and initialize first 3 elements
 
             if(host.os_fingerprinted):
-                host.osFingerprint = host.os_fingerprint              #OS Fingerprint
+                host.osFingerprint = host.os_fingerprint                        #OS Fingerprint
                 print(host.osFingerprint)
 
             #OS Match Parse
-            OSmatches = host.os_class_probabilities()
+            OSmatches = host.os_match_probabilities()
             for OSmatch in OSmatches:
-                parsedHosts[x].addOSmatch(OSmatch.osfamily + " " + OSmatch.osgen) #OS Matches + generation
+                parsedHosts[x].addOSmatch(OSmatch.name)                         #OS Matches name 
             #Services Parse
             if host.services:
                 for s in host.services:
@@ -176,8 +178,13 @@ def display_results(rList):
            
 def create_nmap_search_list(parsedHosts):   #create dictionary search list from nmapParsedHost object
     bannerSearchList = []
+    OSsearchList = []
     for host in parsedHosts:
-        searchDict = {"OS MATCH: ip[" + host.hostAddress + "] " + " mac[" + host.hostMAC + "]" : host.OSmatches}
+        for x in range(len(host.OSmatches)):
+            OSsearchList.append(host.OSmatches[x].replace(" - ", " "))
+            OSsearchList.append(host.OSmatches[x].replace("-", "<"))
+            OSsearchList.append(host.OSmatches[x])
+            searchDict = {"OS MATCH: ip[" + host.hostAddress + "] " + " mac[" + host.hostMAC + "]" : OSsearchList}
     for x in range(len(host.serviceBanners)):
         if host.serviceBanners[x]:
             bannerSearch = host.serviceBanners[x].split(" ")
@@ -186,9 +193,10 @@ def create_nmap_search_list(parsedHosts):   #create dictionary search list from 
             searchDict.update({"SERVICE MATCH: " + host.hostAddress + ":" + str(host.servicePorts[x]) : bannerSearchList})
     return searchDict
 
-def create_results_files(currentXMLpath, results, parsedHosts, searchDict):
+def create_results_files(currentXMLpath, results, parsedHosts, searchDict):   #create output files for search results in host directory
     path = os.path.split(currentXMLpath)
-    with open(path[0] + "/exploitDB-results", 'w') as resultsFILE:
+    os.makedirs(os.path.dirname(path[0] + "/ctfrecon/exploitDB-results"), exist_ok=True)
+    with open(path[0] + "/ctfrecon/exploitDB-results", 'w') as resultsFILE:
         for host in parsedHosts:
             resultsFILE.write("Host: " + host.hostAddress + "\n")
             resultsFILE.write("MAC Address: " + host.hostMAC + "\n")
@@ -208,6 +216,23 @@ def create_results_files(currentXMLpath, results, parsedHosts, searchDict):
                 resultsFILE.write("PLATFORM: " + r[PLATFORM] + "\n")
                 resultsFILE.write("PORT: " + r[PORT] + "\n")
     resultsFILE.close()
+
+    with open(path[0] + "/ctfrecon/.exploitDB_results_index.csv", 'w') as resultsIndexFILE:
+        for r in results:
+            rIndex = ",".join(r)
+            resultsIndexFILE.write(rIndex + "\n")
+    resultsIndexFILE.close()
+
+    with open(path[0] + "/ctfrecon/displayresults.py", 'w') as resultsDisplayFILE:
+        resultsDisplayFILE.write("#!/usr/bin/python3\n\n")
+        resultsDisplayFILE.write("import ctfrecon\n\n")
+        resultsDisplayFILE.write("if __name__ == \"__main__\":\n")
+        resultsDisplayFILE.write("    results = []\n")
+        resultsDisplayFILE.write("    lines = ctfrecon.open_CSV('.exploitDB_results_index.csv')\n")
+        resultsDisplayFILE.write("    for line in lines:\n")
+        resultsDisplayFILE.write("        results.append(line.split(','))\n")
+        resultsDisplayFILE.write("    ctfrecon.display_results(results)")
+    resultsDisplayFILE.close()
 
 def check_len(someString):
     if len(someString) < 4:
@@ -246,20 +271,20 @@ if __name__ == "__main__":
             indexResults = []
             parsedHosts = parse_nmap(currentValue)
             searchDict = create_nmap_search_list(parsedHosts)
-            results = search_exploits(searchDict, open_CSV(SSPATH))
-            indexResults = search_exploits_index(searchDict, open_CSV(SSPATH))
+            results = search_exploits(searchDict, open_CSV(SSPATH + 'files_exploits.csv'))
+            indexResults = search_exploits_index(searchDict, open_CSV(SSPATH + 'files_exploits.csv'))
             finalResults = remove_duplicates(results, indexResults)
             create_results_files(currentValue, finalResults, parsedHosts, searchDict)
             break
         elif currentArg in ("-d", "--deep"):  #deep also runs index search
             check_len(currentValue)
-            results = search_exploits(currentValue, open_CSV(SSPATH))
-            indexResults = search_exploits_index(currentValue, open_CSV(SSPATH))
+            results = search_exploits(currentValue, open_CSV(SSPATH + 'files_exploits.csv'))
+            indexResults = search_exploits_index(currentValue, open_CSV(SSPATH + 'files_exploits.csv'))
             finalResults = remove_duplicates(results, indexResults)
             break
         elif currentArg in ("-i", "--index"):
             check_len(currentValue)
-            finalResults = search_exploits_index(currentValue, open_CSV(SSPATH))
+            finalResults = search_exploits_index(currentValue, open_CSV(SSPATH + 'files_exploits.csv'))
             break
 
     if len(finalResults) > 0:
