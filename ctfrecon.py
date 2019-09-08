@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 
-import sys, os, getopt, pydoc 
+import sys, os, getopt, pydoc, subprocess
 from libnmap.parser import NmapParser
 
 #-------------CSV Identifiers--------------
@@ -234,6 +234,13 @@ def create_results_files(currentXMLpath, results, parsedHosts, searchDict):   #c
         resultsDisplayFILE.write("\n        results.append(lineStrip.split(','))\n")
         resultsDisplayFILE.write("    ctfrecon.display_results(results)")
     resultsDisplayFILE.close()
+
+    status = subprocess.call("cp ctfrecon.py " + path[0] + "/ctfrecon/ctfrecon.py", shell=True)
+    if status != 0:
+        if status < 0:
+            print("Killed by signal", status)
+        else:
+            print("Command failed with return code - ", status)
 
 def check_len(someString):
     if len(someString) < 4:
