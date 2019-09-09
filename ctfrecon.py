@@ -116,31 +116,31 @@ def search_exploits_index(searchStr, csvIndex):    #search only the CSV index fo
                 indexResults.append(tmp)
     return indexResults
 
-def parse_nmap(xmlNmapPath):
+def parse_nmap(xmlNmapPaths):   #TODO: make xmlNmapPath a list of paths and parse through all xml files in list
     parsedHosts = [] 
     x = 0
-    if os.path.isfile(xmlNmapPath):
-        nmap_data = NmapParser.parse_fromfile(xmlNmapPath)
-        for host in nmap_data.hosts:
-            parsedHosts.append(nmapParsedHost(host.address, host.mac, host.vendor)) #create class instance as object in array parsedHosts and initialize first 3 elements
+    for path in xmlNmapPaths:
+        if os.path.isfile(path):
+            nmap_data = NmapParser.parse_fromfile(path)
+            for host in nmap_data.hosts:
+                parsedHosts.append(nmapParsedHost(host.address, host.mac, host.vendor)) #create class instance as object in array parsedHosts and initialize first 3 elements
 
-            if(host.os_fingerprinted):
-                host.osFingerprint = host.os_fingerprint                        #OS Fingerprint
-                print(host.osFingerprint)
+                if(host.os_fingerprinted):
+                    host.osFingerprint = host.os_fingerprint                        #OS Fingerprint
 
-            #OS Match Parse
-            OSmatches = host.os_match_probabilities()
-            for OSmatch in OSmatches:
-                parsedHosts[x].addOSmatch(OSmatch.name)                         #OS Matches name 
-            #Services Parse
-            if host.services:
-                for s in host.services:
-                    parsedHosts[x].addServiceBanner(s.banner)                   #Service banner (product + version)
-                    parsedHosts[x].addServiceName(s.service)                    #Service name
-                    parsedHosts[x].addServiceFingerprint(s.servicefp)           #Service fingerprint
-                    parsedHosts[x].addServicePort(s.port)                       #Service port
-                    parsedHosts[x].addServiceState(s.state)                     #Service state(open/close)
-            x += 1
+                 #OS Match Parse
+                OSmatches = host.os_match_probabilities()
+                for OSmatch in OSmatches:
+                    parsedHosts[x].addOSmatch(OSmatch.name)                         #OS Matches name 
+                #Services Parse
+                if host.services:
+                    for s in host.services:
+                        parsedHosts[x].addServiceBanner(s.banner)                   #Service banner (product + version)
+                        parsedHosts[x].addServiceName(s.service)                    #Service name
+                        parsedHosts[x].addServiceFingerprint(s.servicefp)           #Service fingerprint
+                        parsedHosts[x].addServicePort(s.port)                       #Service port
+                        parsedHosts[x].addServiceState(s.state)                     #Service state(open/close)
+                x += 1
     return parsedHosts 
 
 def display_results(rList):
@@ -177,6 +177,7 @@ def display_results(rList):
         x = 1
            
 def create_nmap_search_list(parsedHosts):   #create dictionary search list from nmapParsedHost object
+    searchDict = {}
     bannerSearchList = []
     OSsearchList = []
     for host in parsedHosts:
@@ -184,63 +185,69 @@ def create_nmap_search_list(parsedHosts):   #create dictionary search list from 
             OSsearchList.append(host.OSmatches[x].replace(" - ", " "))
             OSsearchList.append(host.OSmatches[x].replace("-", "<"))
             OSsearchList.append(host.OSmatches[x])
-            searchDict = {"OS MATCH: ip[" + host.hostAddress + "] " + " mac[" + host.hostMAC + "]" : OSsearchList}
-    for x in range(len(host.serviceBanners)):
-        if host.serviceBanners[x]:
-            bannerSearch = host.serviceBanners[x].split(" ")
-            bannerSearchList.append(bannerSearch[1] + " < " + bannerSearch[3])
-            bannerSearchList.append(bannerSearch[1] + " " + bannerSearch[3])
-            searchDict.update({"SERVICE MATCH: " + host.hostAddress + ":" + str(host.servicePorts[x]) : bannerSearchList})
+            searchDict.update({"OS MATCH: ip[" + host.hostAddress + "] " + " mac[" + host.hostMAC + "]" : OSsearchList})
+            OSsearchList = []
+        for x in range(len(host.serviceBanners)):
+            if host.serviceBanners[x]:
+                bannerSearch = host.serviceBanners[x].split(" ")
+                bannerSearchList.append(bannerSearch[1] + " < " + bannerSearch[3])
+                bannerSearchList.append(bannerSearch[1] + " " + bannerSearch[3])
+                searchDict.update({"SERVICE MATCH: " + host.hostAddress + ":" + str(host.servicePorts[x]) : bannerSearchList})
+                bannerSearchList = []
     return searchDict
 
 def create_results_files(currentXMLpath, results, parsedHosts, searchDict):   #create output files for search results in host directory
     path = os.path.split(currentXMLpath)
+    pathApart = currentXMLpath.split("/")
     os.makedirs(os.path.dirname(path[0] + "/ctfrecon/exploitDB-results"), exist_ok=True)
     with open(path[0] + "/ctfrecon/exploitDB-results", 'w') as resultsFILE:
         for host in parsedHosts:
-            resultsFILE.write("Host: " + host.hostAddress + "\n")
-            resultsFILE.write("MAC Address: " + host.hostMAC + "\n")
-            resultsFILE.write("Vendor: " + host.hostVendor + "\n")
-            resultsFILE.write("OS Matches: ")
-            for OSmatch in host.OSmatches:
-                resultsFILE.write(OSmatch + "  ")
+            if host.hostAddress == pathApart[len(pathApart) - 2]:
+                resultsFILE.write("Host: " + host.hostAddress + "\n")
+                resultsFILE.write("MAC Address: " + host.hostMAC + "\n")
+                resultsFILE.write("Vendor: " + host.hostVendor + "\n")
+                resultsFILE.write("OS Matches: ")
+                for OSmatch in host.OSmatches:
+                    resultsFILE.write(OSmatch + "  ")
 
+                for r in results:
+                    if r[SEARCHKEY].find(pathApart[len(pathApart) -2]) != -1:
+                        resultsFILE.write("\n\n" + r[SEARCHKEY] + " | QUERY: "  + r[SEARCHQUERY] + "\n")
+                        resultsFILE.write("-----------------------------------------------------------\n")
+                        resultsFILE.write("FILE: " + r[FILE] + "\n")
+                        resultsFILE.write("DESCRIPTION: " + r[DESCRIPTION] + "\n")
+                        resultsFILE.write("DATE: " + r[DATE] + "\n")
+                        resultsFILE.write("AUTHOR: " + r[AUTHOR] + "\n")
+                        resultsFILE.write("TYPE: " + r[TYPE] + "\n")
+                        resultsFILE.write("PLATFORM: " + r[PLATFORM] + "\n")
+                        resultsFILE.write("PORT: " + r[PORT] + "\n")
+        resultsFILE.close()
+
+        with open(path[0] + "/ctfrecon/.exploitDB_results_index.csv", 'w') as resultsIndexFILE:
             for r in results:
-                resultsFILE.write("\n\n" + r[SEARCHKEY] + " | QUERY: "  + r[SEARCHQUERY] + "\n")
-                resultsFILE.write("-----------------------------------------------------------\n")
-                resultsFILE.write("FILE: " + r[FILE] + "\n")
-                resultsFILE.write("DESCRIPTION: " + r[DESCRIPTION] + "\n")
-                resultsFILE.write("DATE: " + r[DATE] + "\n")
-                resultsFILE.write("AUTHOR: " + r[AUTHOR] + "\n")
-                resultsFILE.write("TYPE: " + r[TYPE] + "\n")
-                resultsFILE.write("PLATFORM: " + r[PLATFORM] + "\n")
-                resultsFILE.write("PORT: " + r[PORT] + "\n")
-    resultsFILE.close()
+                if r[SEARCHKEY].find(pathApart[len(pathApart) - 2]) != -1:
+                    rIndex = ",".join(r)
+                    resultsIndexFILE.write(rIndex + "\n")
+        resultsIndexFILE.close()
 
-    with open(path[0] + "/ctfrecon/.exploitDB_results_index.csv", 'w') as resultsIndexFILE:
-        for r in results:
-            rIndex = ",".join(r)
-            resultsIndexFILE.write(rIndex + "\n")
-    resultsIndexFILE.close()
+        with open(path[0] + "/ctfrecon/displayresults.py", 'w') as resultsDisplayFILE:
+            resultsDisplayFILE.write("#!/usr/bin/python3\n\n")
+            resultsDisplayFILE.write("import ctfrecon\n\n")
+            resultsDisplayFILE.write("if __name__ == \"__main__\":\n")
+            resultsDisplayFILE.write("    results = []\n")
+            resultsDisplayFILE.write("    lines = ctfrecon.open_CSV('.exploitDB_results_index.csv')\n")
+            resultsDisplayFILE.write("    for line in lines:\n")
+            resultsDisplayFILE.write(r"        lineStrip = line.strip('\n')")
+            resultsDisplayFILE.write("\n        results.append(lineStrip.split(','))\n")
+            resultsDisplayFILE.write("    ctfrecon.display_results(results)")
+        resultsDisplayFILE.close()
 
-    with open(path[0] + "/ctfrecon/displayresults.py", 'w') as resultsDisplayFILE:
-        resultsDisplayFILE.write("#!/usr/bin/python3\n\n")
-        resultsDisplayFILE.write("import ctfrecon\n\n")
-        resultsDisplayFILE.write("if __name__ == \"__main__\":\n")
-        resultsDisplayFILE.write("    results = []\n")
-        resultsDisplayFILE.write("    lines = ctfrecon.open_CSV('.exploitDB_results_index.csv')\n")
-        resultsDisplayFILE.write("    for line in lines:\n")
-        resultsDisplayFILE.write(r"        lineStrip = line.strip('\n')")
-        resultsDisplayFILE.write("\n        results.append(lineStrip.split(','))\n")
-        resultsDisplayFILE.write("    ctfrecon.display_results(results)")
-    resultsDisplayFILE.close()
-
-    status = subprocess.call("cp ctfrecon.py " + path[0] + "/ctfrecon/ctfrecon.py", shell=True)
-    if status != 0:
-        if status < 0:
-            print("Killed by signal", status)
-        else:
-            print("Command failed with return code - ", status)
+        status = subprocess.call("cp ctfrecon.py " + path[0] + "/ctfrecon/ctfrecon.py", shell=True)
+        if status != 0:
+            if status < 0:
+                print("Killed by signal", status)
+            else:
+                print("Command failed with return code - ", status)
 
 def check_len(someString):
     if len(someString) < 4:
@@ -277,7 +284,8 @@ if __name__ == "__main__":
         if currentArg in ("-x", "--nmapXML"):
             results = []
             indexResults = []
-            parsedHosts = parse_nmap(currentValue)
+            xmlPath = [currentValue]
+            parsedHosts = parse_nmap(xmlPath)
             searchDict = create_nmap_search_list(parsedHosts)
             results = search_exploits(searchDict, open_CSV(SSPATH + 'files_exploits.csv'))
             indexResults = search_exploits_index(searchDict, open_CSV(SSPATH + 'files_exploits.csv'))
