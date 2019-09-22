@@ -188,7 +188,7 @@ def create_nmap_search_list(parsedHosts):   #create dictionary search list from 
             OSsearchList = []
         for x in range(len(host.serviceBanners)):
             if host.serviceBanners[x]:
-                bannerSearch = host.serviceBanners[x].split(" ")
+                bannerSearch = host.serviceBanners[x].split(" ")           #TODO: this all needs regexing
                 bannerSearchList.append(bannerSearch[1] + " < " + bannerSearch[3])
                 bannerSearchList.append(bannerSearch[1] + " " + bannerSearch[3])
                 searchDict.update({"SERVICE MATCH: ip:port[" + host.hostAddress + ":" + str(host.servicePorts[x]) + "]" : bannerSearchList})
@@ -255,12 +255,12 @@ def check_len(someString):
 
 def remove_duplicates(results1, results2):
     #remove duplicate results
-    for x in range(len(results1)-1):
-        for y in range(len(results2)-1):
-            if results1[x] == results2[y]:
-                del results2[y]
-    for x in range(len(results2)-1):
-        results1.append(results2[x])
+    for x in range(len(results1)):
+        for y in range(len(results2)):
+            if results1[x-1] == results2[y-1]:
+                del results2[y-1]
+    for x in range(len(results2)):
+        results1.append(results2[x-1])
     return results1
 
 if __name__ == "__main__":
