@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 
-import sys, os, getopt, pydoc, subprocess
+import sys, os, getopt, pydoc, subprocess, re
 from libnmap.parser import NmapParser
 
 #-------------CSV Identifiers--------------
@@ -179,18 +179,26 @@ def create_nmap_search_list(parsedHosts):   #create dictionary search list from 
     searchDict = {}
     bannerSearchList = []
     OSsearchList = []
+    serviceRegex = re.compile(r'product: (\w+) version: (\S+)')
+
     for host in parsedHosts:
         for x in range(len(host.OSmatches)):
-            OSsearchList.append(host.OSmatches[x].replace(" - ", " "))
+            OSsearchList.append(host.OSmatches[x].replace(" - ", " "))   #TODO:could use regex also, like services
             OSsearchList.append(host.OSmatches[x].replace("-", "<"))
             OSsearchList.append(host.OSmatches[x])
             searchDict.update({"OS MATCH: ip[" + host.hostAddress + "] " + " mac[" + host.hostMAC + "]" : OSsearchList})
             OSsearchList = []
         for x in range(len(host.serviceBanners)):
             if host.serviceBanners[x]:
-                bannerSearch = host.serviceBanners[x].split(" ")           #TODO: this all needs regexing
-                bannerSearchList.append(bannerSearch[1] + " < " + bannerSearch[3])
-                bannerSearchList.append(bannerSearch[1] + " " + bannerSearch[3])
+                sMatch = serviceRegex.search(host.serviceBanners[x])
+
+                if sMatch:
+                    if sMatch.group(1) and sMatch.group(2):
+                        bannerSearchList.append(sMatch.group(1) + " < " + sMatch.group(2))
+                        bannerSearchList.append(sMatch.group(1) + " " + sMatch.group(2))
+                    else:
+                        bannerSearchList.append(sMatch.group(1))
+
                 searchDict.update({"SERVICE MATCH: ip:port[" + host.hostAddress + ":" + str(host.servicePorts[x]) + "]" : bannerSearchList})
                 bannerSearchList = []
     return searchDict
