@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#!/usr/bin/python3
 
 import sys, os, getopt, pydoc, subprocess, re
 from libnmap.parser import NmapParser
@@ -102,7 +102,7 @@ def search_exploits_index(searchStr, csvIndex):    #search only the CSV index fo
                     search = lineLower.find(searchQuery.lower())
                     if search != -1:
                         tmpStrip = line.strip('\n')
-                        tmp = tmpStrip.split(',')   #turning into multidimensional array so display_esults can read it correctly
+                        tmp = tmpStrip.split(',')   #A list of CSVs from index is returned as search results
                         tmp.append(searchKey)
                         tmp.append(searchQuery)
                         indexResults.append(tmp)
@@ -110,7 +110,7 @@ def search_exploits_index(searchStr, csvIndex):    #search only the CSV index fo
             search = lineLower.find(searchStr.lower())
 
             if search != -1:               
-                tmp = line.split(',')    #turning into multidimensional array so display_esults can read it correctly
+                tmp = line.split(',')    #A list of CSVs from the index is returned as search results
                 tmp.append("Index Search")
                 tmp.append(searchStr)
                 indexResults.append(tmp)
@@ -135,7 +135,7 @@ def parse_nmap(xmlNmapPaths):
                 #Services Parse
                 if host.services:
                     for s in host.services:
-                        parsedHosts[x].addServiceBanner(s.banner)                       #Service banner (product + version)
+                        parsedHosts[x].addServiceBanner(s.banner)                       #Service banner (product: Version:)
                         parsedHosts[x].addServiceName(s.service)                        #Service name
                         parsedHosts[x].addServiceFingerprint(s.servicefp)               #Service fingerprint
                         parsedHosts[x].addServicePort(s.port)                           #Service port
