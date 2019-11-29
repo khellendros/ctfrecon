@@ -46,6 +46,7 @@ class nmapParsedHost:
     def addOSmatch(self, OSmatch):
         self.OSmatches.append(OSmatch)
 
+
 def open_CSV(PATH):   #open, read all lines from CSV index
     if os.path.isfile(PATH) == True:
         exploitCSV = open(PATH)
