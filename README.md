@@ -1,3 +1,3 @@
-# ctfrecon
+# CTFRECON 
 
-Deep search utilizing searchsploits/exploit-db local data.
+Host enumeration tool - more info to come
