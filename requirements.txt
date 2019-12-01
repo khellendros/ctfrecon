@@ -1,0 +1,4 @@
+temporary requirements file.  will be moved to setup.py in the future.
+
+requires:
+	mongoengine

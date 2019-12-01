@@ -1,0 +1,28 @@
+""" Use Cases """
+
+# Create New Domain Enumeration
+ctf_project = []
+project_enums.append(Enumeration(name='json.htb', ipaddress='10.10.10.155'))
+
+""" Enumeration Commands """
+$ show domains
+
+for domain in Enumeration.objects:
+    print(domain.name)
+
+json.htb    staging.json.htb    www.json.htb
+
+$ select domain json.htb
+
+    Domain: json.htb    IPv4: 10.10.10.155
+
+    Enumeration:
+        Tool Results: gobuster, nmap, dirbuster
+        Notes:        pathstoroot, strangedb, possibleattacks
+        FOI:          adminhash, sqlitedb
+
+$ show enum all
+$ show enum gobuster
+$ show enum nmap
+$ show enum dirbuster
+$ show enum pathstoroot
