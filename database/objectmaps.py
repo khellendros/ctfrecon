@@ -1,29 +1,34 @@
-# Object Mappings for MongoDB
+# Object Document Mappings for MongoDB
+import datetime as dt 
 from mongoengine import *
 
 class WordList(Document):
-    name = StringField(unique=True)
-    list = StringField()
+    name = StringField(required=True, unique=True)
+    lists = ListField(StringField())
+    modifytime = DateTimeField(default=dt.datetime.utcnow())
 
 class Tool(Document):
-    name = StringField(unique=True)
-    path = StringField(unique=True)
+    alias = StringField(required=True, unique=True)
+    command = StringField(required=True, unique=True)
 
 class ToolChain(Document):
-    name = StringField(unique=True)
-    tools = ListField(EmbeddedDocumentField(Tool))
+    name = StringField(required=True, unique=True)
+    tools = ListField(ReferenceField(Tool))
 
 class ToolOutput(EmbeddedDocument):
-    owner = ReferenceField(Tool)
+    command = StringField() 
     output = StringField()
+    modifytime = DateTimeField(default=dt.datetime.utcnow())
 
 class Note(EmbeddedDocument):
     name = StringField(unique=True)
     content = StringField()
+    modifytime = DateTimeField(default=dt.datetime.utcnow())
 
 class FOI(EmbeddedDocument):
     name = StringField(unique=True)
     content = StringField()
+    modifytime = DateTimeField(default=dt.datetime.utcnow())
 
 class Enumeration(Document):
     domain = URLField(required=True, unique=True)
