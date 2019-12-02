@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 from objectmaps import Tool, WordList, ToolChain
 from mongoengine import connect, disconnect
 
