@@ -1,7 +1,8 @@
 #! /usr/bin/env python3
-from objectmaps import * 
+from objectmaps import Tool, WordList, ToolChain
+from mongoengine import connect, disconnect
 
-connect(alias='ctfrecon_db_alias', db='ctfrecon_db')
+connect('ctfrecon_db')
 
 for tools in Tool.objects:
     tools.delete()

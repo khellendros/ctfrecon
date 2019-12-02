@@ -1,6 +1,7 @@
 # Object Document Mappings for MongoDB
 import datetime as dt 
-from mongoengine import *
+from mongoengine import Document, EmbeddedDocument, StringField, ListField, \
+                        EmbeddedDocumentField, DateTimeField, ReferenceField
 
 class WordList(Document):
     name = StringField(required=True, unique=True)
@@ -32,7 +33,7 @@ class FOI(EmbeddedDocument):
 
 class Enumeration(Document):
     project = StringField(required=True)
-    domain = URLField(required=True, unique=True)
+    domain = StringField(required=True, unique=True)
     ipaddress = StringField()
     notes = ListField(EmbeddedDocumentField(Note))
     toolenum = ListField(EmbeddedDocumentField(ToolOutput))
