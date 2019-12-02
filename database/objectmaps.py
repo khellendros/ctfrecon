@@ -31,6 +31,7 @@ class FOI(EmbeddedDocument):
     modifytime = DateTimeField(default=dt.datetime.utcnow())
 
 class Enumeration(Document):
+    project = StringField(required=True)
     domain = URLField(required=True, unique=True)
     ipaddress = StringField()
     notes = ListField(EmbeddedDocumentField(Note))

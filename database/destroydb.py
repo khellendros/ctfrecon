@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
-from objectmaps import *
+from objectmaps import * 
 
-connect('ctfrecon_default')
+connect(alias='ctfrecon_db_alias', db='ctfrecon_db')
 
 for tools in Tool.objects:
     tools.delete()

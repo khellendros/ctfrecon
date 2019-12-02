@@ -1,8 +1,7 @@
 #! /usr/bin/env python3
 from objectmaps import *
 
-connect('ctfrecon_default')
-
+connect(alias='ctfrecon_db_alias', db='ctfrecon_db')
 
 for wordlist in WordList.objects:
     print(wordlist.name)

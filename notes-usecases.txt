@@ -1,18 +1,27 @@
 """ Use Cases """
 
 # Create New Domain Enumeration
-ctf_project = []
-project_enums.append(Enumeration(name='json.htb', ipaddress='10.10.10.155'))
 
 """ Enumeration Commands """
+$ show projects
+
+for enum in Enumeration.objects
+    print(enum.project)
+
+JSON	  NETWORKED	VERIZON-BUGBOUNTY
+
+$ use json 
+
+projectname = "json"
+
 $ show domains
 
-for domain in Enumeration.objects:
-    print(domain.name)
+for enum in Enumeration.objects(project=projectname):
+    print(enum.domain)
 
 json.htb    staging.json.htb    www.json.htb
 
-$ select domain json.htb
+$ use domain json.htb
 
     Domain: json.htb    IPv4: 10.10.10.155
 
@@ -26,3 +35,50 @@ $ show enum gobuster
 $ show enum nmap
 $ show enum dirbuster
 $ show enum pathstoroot
+
+$ add domain staging.json.htb
+
+enum = Enumeration(project=projectname, domain=newdomain)
+enum.save()
+switch_namespace_to_new_domain()
+Maybe have a current_namespace object -> namespace class to define what project/domain we are set to
+
+$ set ip address
+enum.ipaddress = ipaddress
+
+assign document object for new name space with doc object = Enumeration.objects(domain=namespace.domain)
+
+
+########## Commands & Interface Design #############
+  (namespaces are inherit all namespaces below it)
+
+GLOBAL NAMESPACE:
+-----------------
+show TOOLS
+show TOOLCHAINS
+add TOOL
+add TOOLCHAIN
+
+show PROJECTS
+use PROJECT
+add PROJECT
+
+PROJECT NAMESPACE:
+------------------
+show DOMAINS
+use DOMAIN
+add DOMAIN
+
+DOMAIN NAMESPACE:
+-----------------------
+set IPADDRESS
+set NOTE
+set FOI
+
+show enum ALL
+show enum TOOL
+show enum NOTE
+show enum FOI
+
+run TOOLCHAIN NAME 
+run TOOL ALIAS

@@ -2,7 +2,7 @@
 # Create default MongoDB Collections
 from objectmaps import *
 
-connect('ctfrecon_default')
+connect(alias='ctfrecon_db_alias', db='ctfrecon_db')
 
 # Wordlists
 default_wordlist = WordList(name='mega web discovery', lists=['/opt/github/SecLists/Discovery/Web-Content/big.txt',
