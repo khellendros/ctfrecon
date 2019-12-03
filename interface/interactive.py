@@ -13,7 +13,7 @@ class CommandLineInterface():
         self.command = input('%s ' % self.prompt)
         self.cmdbreakout = self.command.split(' ')
     
-    def exec_cmd(self)
+    def exec_cmd(self):
         
         return False
 
@@ -23,4 +23,4 @@ status = True
 
 while status:
     interface.get_cmd()
-    status = interface.exec_cmd(command.cmdbreakout)
+    status = interface.exec_cmd()
