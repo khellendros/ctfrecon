@@ -1,4 +1,4 @@
-from interface.commandhandler import exec_cmd
+from interface.commandhandler import CmdHandler 
 
 class CommandLineInterface():
 
@@ -6,6 +6,7 @@ class CommandLineInterface():
         self.command = ''
         self.namespace = 'global'
         self.prompt = 'ctfrecon# '
+        self.cmdhandler = CmdHandler()
 
     def get_cmd(self):
 
@@ -14,8 +15,9 @@ class CommandLineInterface():
         self.cmdbreakout = self.command.split(' ')
     
     def exec_cmd(self):
-        
-        return False
+   
+        cmdstatus = self.cmdhandler.execute(self.cmdbreakout)
+        return cmdstatus 
 
 
 interface = CommandLineInterface()

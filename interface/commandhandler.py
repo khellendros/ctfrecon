@@ -1,8 +1,12 @@
 import database.dbhandler as dbhandler
 
-def exec_cmd(cmd):
+class CmdHandler():
 
-    if cmd[0] == 'show':
-        print('show function')
+    def __init__(self):
+        self.cmdlist = []
 
-    return False
+    def execute(self, cmd):
+        if cmd[0] == 'show':
+            print('show function')
+            return False
+
