@@ -1,3 +1,3 @@
 # CTFRECON 
 
-Host enumeration tool - more info to come
+Enumeration automation and cataloging tool.

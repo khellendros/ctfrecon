@@ -1,45 +1,36 @@
+from os import system
 import database.dbhandler as dbhandler
 
 def use_cmd(cli):
-    newnamespace = 'project'
-    cli.change_namespace(newnamespace)
-    print('change namespace')
+    cli.change_namespace('json', 2)
     return True;
 
 
 def show_cmd(cli):
-    if len(cli.cmd_breakout) < 2:
-        cli.display_msg('Invalid number of arguments to "show" --try "help"')
-        return True
+    if (len(cli.cmd_breakout) < 2):
+        subcmd = None
+        status = 'Invalid number of arguments to "show", try using "help"'
+    else:
+        subcmd = cli.cmd_breakout[1]
+        status = 'Invalid argument to "show", try using "help"'
 
-    if cli.cmd_breakout[1] == 'projects':
-        cli.display_msg('show projects')
-        return True
-    elif cli.cmd_breakout[1] == 'tools':
-        cli.display_msg('show tools')
-        return True
-    elif cli.cmd_breakout[1] == 'toolchains':
-        cli.display_msg('show toolchains')
-        return True
+    if (subcmd == 'projects'):
+        status = dbhandler.show_db(cli)
+    elif (subcmd == 'tools'):
+        status = dbhandler.show_db(cli)
+    elif (subcmd == 'toolchains'):
+        status = dbhandler.show_db(cli)
     
-    if cli.namespace == 'project':
-        
-        if cli.cmd_breakout[1] == 'domains':
-            cli.display_msg('show domains')
-            return True
-        else:
-            cli.display_msg('Unknown option for show in %s namespace' % cli.namespace)
-            return True
+    if (cli.namespace_lvl > 1):
+        if (subcmd == 'domains'):
+            status = dbhandler.show_db(cli)
 
-    elif cli.namespace == 'domain':
-
+    if (cli.namespace_lvl > 2):
         # validate and display enumeration attribute here
-        if cli.cmd_breakout[1] == 'enum':
-            cli.display_msg('show enum')
-            return True
+        if (subcmd == 'enum'):
+            status = cli.display_msg('show enum')
 
-
-    return True
+    return status 
 
 
 def add_cmd(cli):
@@ -55,13 +46,11 @@ def run_cmd(cli):
 
 
 def exit_ctfrecon(cli):
-    cli.display_msg('Goodbye!')
-    return False;
+    exit(0)
 
-
-def no_cmd(cli):
-    cli.display_msg('Unknown Command!')
-    return True 
+def no_cmd(cli):    # TODO: Add support for cd dir
+    system(cli.command)
+    return 'OK' 
 
 
 

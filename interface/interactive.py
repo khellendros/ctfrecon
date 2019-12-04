@@ -5,7 +5,8 @@ class CommandLineInterface():
 
     def __init__(self):
         self.command = ''
-        self.namespace = 'global'
+        self.namespace = 'ctfrecon'
+        self.namespace_lvl = 1 
         self.prompt = 'ctfrecon# '
         self.commandlist = {'show': cmdhandler.show_cmd, 
                             'use': cmdhandler.use_cmd,
@@ -16,8 +17,9 @@ class CommandLineInterface():
                             'quit': cmdhandler.exit_ctfrecon,
                             'help': self.display_help} 
 
-    def change_namespace(self, namespace):
+    def change_namespace(self, namespace, namespace_lvl):
         self.namespace = namespace
+        self.namespace_lvl = namespace_lvl
         self.prompt = namespace + '# '
 
     def get_cmd(self):
@@ -34,24 +36,33 @@ class CommandLineInterface():
     def display_msg(self, message):
         print('--- {} ---'.format(message))
 
+    def display_list(self, outputlist):
+        print()
+        for listitem in outputlist:
+            print(" {} ".format(listitem))
+        print()
+
     def display_help(self, throwaway):
-        if self.namespace is 'global':
-            print('\nGlobal Namespace Commands:\n'
-                  '--------------------------\n'
-                  'show projects\n'
-                  'use project [project]\n'
-                  'add project [project]\n'
-                  'show tools\n'
-                  'add tool\n'
-                  'show toolchains\n'
-                  'add toolchain\n'
-                 )
-        return True
+        print('\nCommands:\n'
+              '---------\n')
+        if self.namespace_lvl > 0:
+            print('show projects\n'
+                'use project [project]\n'
+                'add project [project]\n'
+                'show tools\n'
+                'add tool\n'
+                'show toolchains\n'
+                'add toolchain\n'
+                )
+
+        return 'OK' 
                     
 
 interface = CommandLineInterface()
 status = True
 
-while status:
+while True:
     interface.get_cmd()
     status = interface.exec_cmd()
+    if (status != 'OK'):
+        interface.display_msg(status)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Create default MongoDB Collections
-from objectmaps import Tool, WordList, ToolChain
+from objectmaps import Tool, WordList, ToolChain, Enumeration
 from mongoengine import connect, disconnect
 
 connect('ctfrecon_db')
@@ -21,5 +21,9 @@ default_tool.save()
 # Tool Chains
 default_toolchain = ToolChain(name='initial discovery', tools=['gobuster', 'nmap full'])
 default_toolchain.save()
+
+# Enumerations
+test_enum = Enumeration(project='json', domain='json.htb', ipaddress='10.10.10.145')
+test_enum.save()
 
 disconnect()
