@@ -15,7 +15,7 @@ def show_db(cli):
         for enum in Enumeration.objects:
             enumlist.append(enum.project)
     elif (cli.cmd_breakout[1] == 'domains'):
-        for enum in Enumeration.objects(project=cli.namespace):
+        for enum in Enumeration.objects(project=cli.namespace.project):
             enumlist.append(enum.domain)
     elif (cli.cmd_breakout[1] == 'tools'):
         for tool in Tool.objects:  
@@ -42,5 +42,6 @@ def validate_namespace(cli):
         for enum in Enumeration.objects:
             if (enum.domain == cli.cmd_breakout[2]):
                 status = True
-
+    
+    mongo_disconnect()
     return status

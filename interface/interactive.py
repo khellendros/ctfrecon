@@ -1,13 +1,22 @@
 import interface.commandhandler as cmdhandler
 
+class NameSpace():
+    def __init__(self):
+        self.project = ''
+        self.domain = ''
+        self.level = 1
+
+    def change(self, project='', domain='', level=0):
+        self.project = project 
+        self.domain = domain 
+        self.level = level 
+        return 'OK'
 
 class CommandLineInterface():
 
     def __init__(self):
         self.command = ''
-        self.namespace = 'ctfrecon'
-        self.namespace_lvl = 1 
-        self.prompt = 'ctfrecon# '
+        self.namespace = NameSpace()
         self.commandlist = {'show': cmdhandler.show_cmd, 
                             'use': cmdhandler.use_cmd,
                             'add': cmdhandler.add_cmd, 
@@ -17,11 +26,8 @@ class CommandLineInterface():
                             'quit': cmdhandler.exit_ctfrecon,
                             'help': self.display_help} 
 
-    def change_namespace(self, namespace, namespace_lvl):
-        self.namespace = namespace
-        self.namespace_lvl = namespace_lvl
-        self.prompt = namespace + '# '
-        return 'OK'
+    def setprompt(self):
+        self.prompt = '%s::%s#' % (self.namespace.project, self.namespace.domain)
 
     def get_cmd(self):
         self.command = ''
@@ -47,7 +53,7 @@ class CommandLineInterface():
     def display_help(self, throwaway):
         print('\nCommands:\n'
               '---------\n')
-        if self.namespace_lvl > 0:
+        if self.namespace.level > 0:
             print('show projects\n'
                 'use project [project]\n'
                 'add project [project]\n'
@@ -56,7 +62,7 @@ class CommandLineInterface():
                 'show toolchains\n'
                 'add toolchain\n'
                 )
-        if self.namespace_lvl == 2:
+        if self.namespace.level == 2:
             print('show domains\n'
                 'use domain [domain]\n'
                 )

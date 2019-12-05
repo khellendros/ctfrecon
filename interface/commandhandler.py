@@ -15,12 +15,12 @@ def use_cmd(cli):
 
     if (subcmd == 'project'):
         if (dbhandler.validate_namespace(cli)):
-            status = cli.change_namespace(namespace, 2)
+            status = cli.namespace.change(project=namespace, domain='', level=2)
         else:
             status = '{} does not exist!'.format(subcmd)
-    elif (subcmd == 'domain') and (cli.namespace_lvl >= 2):
+    elif (subcmd == 'domain') and (cli.namespace.level >= 2):
         if (dbhandler.validate_namespace(cli)):
-            status = cli.change_namespace(namespace, 3)
+            status = cli.namespace.change(project=cli.namespace.project, domain=namespace, level=3)
         else:
            status = '{} does not exist!'.format(subcmd)
     
@@ -43,11 +43,11 @@ def show_cmd(cli):
     elif (subcmd == 'toolchains'):
         status = dbhandler.show_db(cli)
     
-    if (cli.namespace_lvl > 1):
+    if (cli.namespace.level > 1):
         if (subcmd == 'domains'):
             status = dbhandler.show_db(cli)
 
-    if (cli.namespace_lvl > 2):
+    if (cli.namespace.level > 2):
         # validate and display enumeration attribute here
         if (subcmd == 'enum'):
             status = cli.display_msg('show enum')
@@ -56,15 +56,15 @@ def show_cmd(cli):
 
 
 def add_cmd(cli):
-    return True;
+    return 'OK';
 
 
 def set_cmd(cli):
-    return True;
+    return 'OK';
 
 
 def run_cmd(cli):
-    return True;
+    return 'OK';
 
 
 def exit_ctfrecon(cli):

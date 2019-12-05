@@ -6,8 +6,9 @@ if __name__ == '__main__':
     interface = CommandLineInterface()
     status = True                     
 
-    while True:                          
-        interface.get_cmd()              
+    while True:
+        interface.setprompt()
+        interface.get_cmd()
         status = interface.exec_cmd()    
         if (status != 'OK'):             
             interface.display_msg(status)
