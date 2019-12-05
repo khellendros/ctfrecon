@@ -1,4 +1,5 @@
-from os import system, chdir
+import sys
+import os
 import database.dbhandler as dbhandler
 
 def use_cmd(cli):
@@ -48,14 +49,15 @@ def run_cmd(cli):
 def exit_ctfrecon(cli):
     exit(0)
 
-def no_cmd(cli):    # TODO: Add support for cd dir
+def no_cmd(cli):
     if cli.cmd_breakout[0] == 'cd' and len(cli.cmd_breakout) > 1:
         try:
-            chdir(cli.cmd_breakout[1])
-        except FileNotFoundError as e:
+            os.chdir(cli.cmd_breakout[1])
+        except: 
+            e = sys.exc_info()[0]
             print(e)
     else:
-        system(cli.command)
+        os.system(cli.command)
     return 'OK' 
 
 

@@ -26,8 +26,9 @@ class CommandLineInterface():
         self.command = ''
         self.cmd_breakout = []
         self.command = input('%s ' % self.prompt)
-        self.command = self.command.lower()
         self.cmd_breakout = self.command.split(' ')
+        if (len(self.cmd_breakout) > 0):
+            self.cmd_breakout[0] = self.cmd_breakout[0].lower()
     
     def exec_cmd(self):
         cmdstatus = self.commandlist.get(self.cmd_breakout[0], cmdhandler.no_cmd)(self)
