@@ -3,8 +3,28 @@ import os
 import database.dbhandler as dbhandler
 
 def use_cmd(cli):
-    cli.change_namespace('json', 2)
-    return True;
+    if (len(cli.cmd_breakout) < 3):
+        subcmd = None
+        namespace = None
+        status = 'Invalid number of arguments to "use", try using "help"'
+    else:
+        subcmd = cli.cmd_breakout[1]
+        namespace = cli.cmd_breakout[2]
+        status = 'Invalid argument to "use", try using "help"'
+
+
+    if (subcmd == 'project'):
+        if (dbhandler.validate_namespace(cli)):
+            status = cli.change_namespace(namespace, 2)
+        else:
+            status = '{} does not exist!'.format(subcmd)
+    elif (subcmd == 'domain') and (cli.namespace_lvl >= 2):
+        if (dbhandler.validate_namespace(cli)):
+            status = cli.change_namespace(namespace, 3)
+        else:
+           status = '{} does not exist!'.format(subcmd)
+    
+    return status 
 
 
 def show_cmd(cli):
@@ -14,6 +34,7 @@ def show_cmd(cli):
     else:
         subcmd = cli.cmd_breakout[1]
         status = 'Invalid argument to "show", try using "help"'
+
 
     if (subcmd == 'projects'):
         status = dbhandler.show_db(cli)

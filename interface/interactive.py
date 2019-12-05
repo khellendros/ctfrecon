@@ -21,6 +21,7 @@ class CommandLineInterface():
         self.namespace = namespace
         self.namespace_lvl = namespace_lvl
         self.prompt = namespace + '# '
+        return 'OK'
 
     def get_cmd(self):
         self.command = ''
@@ -55,15 +56,8 @@ class CommandLineInterface():
                 'show toolchains\n'
                 'add toolchain\n'
                 )
-
+        if self.namespace_lvl == 2:
+            print('show domains\n'
+                'use domain [domain]\n'
+                )
         return 'OK' 
-                    
-
-interface = CommandLineInterface()
-status = True
-
-while True:
-    interface.get_cmd()
-    status = interface.exec_cmd()
-    if (status != 'OK'):
-        interface.display_msg(status)

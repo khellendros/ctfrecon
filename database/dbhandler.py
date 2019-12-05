@@ -28,6 +28,19 @@ def show_db(cli):
         cli.display_list(enumlist)
 
     mongo_disconnect()  
-
     return 'OK'
 
+def validate_namespace(cli):
+    mongo_connect()
+    status = False
+
+    if (cli.cmd_breakout[1] == 'project'):
+        for enum in Enumeration.objects:
+            if (enum.project == cli.cmd_breakout[2]):
+                status = True
+    elif (cli.cmd_breakout[1] == 'domain'):
+        for enum in Enumeration.objects:
+            if (enum.domain == cli.cmd_breakout[2]):
+                status = True
+
+    return status
