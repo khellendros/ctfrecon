@@ -2,8 +2,8 @@ import interface.commandhandler as cmdhandler
 
 class NameSpace():
     def __init__(self):
-        self.project = ''
-        self.domain = ''
+        self.project = 'CTF'
+        self.domain = 'RECON'
         self.level = 1
 
     def change(self, project='', domain='', level=0):
