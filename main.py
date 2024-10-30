@@ -12,5 +12,3 @@ if __name__ == '__main__':
         status = interface.exec_cmd()    
         if (status != 'OK'):             
             interface.display_msg(status)
-
-
